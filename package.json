@@ -1,0 +1,30 @@
+{
+  "name": "battleship-game",
+  "description": "A game web application.",
+  "private": true,
+  "scripts": {
+    "dev": "webpack serve --open --config dev.webpack.config.babel.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Max-N89/battleship-game.git"
+  },
+  "author": "Maksym Nikishyn <4work.maxn@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Max-N89/battleship-game/issues"
+  },
+  "homepage": "https://github.com/Max-N89/battleship-game#readme",
+  "devDependencies": {
+    "@babel/core": "^7.15.8",
+    "@babel/preset-env": "^7.15.8",
+    "@babel/register": "^7.15.3",
+    "babel-loader": "^8.2.2",
+    "css-loader": "^6.4.0",
+    "html-webpack-plugin": "^5.4.0",
+    "style-loader": "^3.3.0",
+    "webpack": "^5.58.2",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.3.1"
+  }
+}
