@@ -59,7 +59,7 @@ function gameReducer(state = createInitState(PLAYERS_IDS), action) {
                 ...state,
                 players: {
                     ...state.players,
-                    entities: createPlayersEntities(state.players.ids),
+                    entities: createPlayersInitEntities(state.players.ids),
                 },
             };
         }
@@ -103,13 +103,13 @@ function createInitState(playersIds) {
         },
         players: {
             ids: [...playersIds],
-            entities: createPlayersEntities(playersIds),
+            entities: createPlayersInitEntities(playersIds),
         },
     };
 }
 
-function createPlayersEntities(playersIds) {
-    return playersIds.reduce((acc, id) => {
+function createPlayersInitEntities(ids) {
+    return ids.reduce((acc, id) => {
         acc[id] = {
             deploymentHistory: [],
             shotsHistory: [],
