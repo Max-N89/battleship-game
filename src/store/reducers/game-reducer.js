@@ -1,6 +1,4 @@
-const PLAYERS_IDS = ["a", "b"];
-
-function gameReducer(state = createInitState(PLAYERS_IDS), action) {
+function gameReducer(state = createGameInitState(), action) {
     switch (action.type) {
         case "game/deploy": {
             const {playerId, anchorCoords, direction, length} = action.payload;
@@ -72,7 +70,9 @@ export default gameReducer;
 
 // *** SUPPLEMENTS ***
 
-function createInitState(playersIds) {
+function createGameInitState() {
+    const PLAYERS_IDS = ["a", "b"];
+
     return {
         settings: {
             grid: {
@@ -102,8 +102,8 @@ function createInitState(playersIds) {
             },
         },
         players: {
-            ids: [...playersIds],
-            entities: createPlayersInitEntities(playersIds),
+            ids: [...PLAYERS_IDS],
+            entities: createPlayersInitEntities(PLAYERS_IDS),
         },
     };
 }
