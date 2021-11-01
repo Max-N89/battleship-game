@@ -1,6 +1,10 @@
+import {STORE_ACTIONS_TYPES} from "../../constants";
+
+const {GAME_DEPLOY, GAME_SHOOT, GAME_RESET} = STORE_ACTIONS_TYPES;
+
 function gameReducer(state = createGameInitState(), action) {
     switch (action.type) {
-        case "game/deploy": {
+        case GAME_DEPLOY: {
             const {playerId, anchorCoords, direction, length} = action.payload;
             const {x, y} = anchorCoords;
 
@@ -27,7 +31,7 @@ function gameReducer(state = createGameInitState(), action) {
                 },
             };
         }
-        case "game/shoot": {
+        case GAME_SHOOT: {
             const {playerId, coords} = action.payload;
             const {x, y} = coords;
 
@@ -52,7 +56,7 @@ function gameReducer(state = createGameInitState(), action) {
                 },
             };
         }
-        case "game/reset": {
+        case GAME_RESET: {
             return {
                 ...state,
                 players: {
@@ -76,6 +80,7 @@ function createGameInitState() {
     return {
         settings: {
             grid: {
+                // grid coordinates range is from (0, 0) to (width - 1, height - 1)
                 width: 10,
                 height: 10,
             },
