@@ -1,4 +1,4 @@
-import {STORE_ACTIONS_TYPES} from "../../constants";
+import {STORE_ACTIONS_TYPES} from "../constants";
 import {selectGameGridDescription, selectPlayerDeploymentHistory} from "../selectors";
 import validateGameDeploymentAction from "../features/validate-game-deployment-action";
 

@@ -1,4 +1,4 @@
-import {DEPLOYMENT_DIRECTIONS} from "../../constants";
+import {DEPLOYMENT_DIRECTIONS} from "../constants";
 import createDeploymentMap from "./create-deployment-map";
 import {DeploymentActionValidationError} from "./store-errors";
 

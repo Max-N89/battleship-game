@@ -1,4 +1,4 @@
-import {DEPLOYMENT_DIRECTIONS} from "../../constants";
+import {DEPLOYMENT_DIRECTIONS} from "../constants";
 
 const gridsDescriptionsMap = new WeakMap();
 

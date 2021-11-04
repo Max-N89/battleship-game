@@ -1,4 +1,4 @@
-import {STORE_ACTIONS_TYPES} from "../../constants";
+import {STORE_ACTIONS_TYPES} from "../constants";
 
 const {GAME_DEPLOY, GAME_SHOOT, GAME_RESET} = STORE_ACTIONS_TYPES;
 
