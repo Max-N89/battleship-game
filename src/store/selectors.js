@@ -1,11 +1,11 @@
-export function getGameGridDescription(state) {
+export function selectGameGridDescription(state) {
     return state.game?.settings?.grid;
 }
 
-export function getPlayerDeploymentHistory(state, playerId) {
+export function selectPlayerDeploymentHistory(state, playerId) {
     return state.game?.players?.entities?.[playerId]?.deploymentHistory;
 }
 
-export function getPlayerShotsHistory(state, playerId) {
+export function selectPlayerShotsHistory(state, playerId) {
     return state.game?.players?.entities?.[playerId]?.shotsHistory;
 }
