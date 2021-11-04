@@ -3,19 +3,24 @@ import {STORE_ACTIONS_TYPES} from "../constants";
 const {GAME_DEPLOY, GAME_SHOOT, GAME_RESET} = STORE_ACTIONS_TYPES;
 
 function gameReducer(state = createGameInitState(), action) {
+    // handling exceptions for "game/deploy" and "game/shoot" actions
+    if (
+        action.error && (
+            action.type === GAME_DEPLOY ||
+            action.type === GAME_SHOOT
+        )
+    ) {
+        return {
+            ...state,
+            errors: [
+                ...state.errors,
+                action.payload,
+            ],
+        };
+    }
+
     switch (action.type) {
         case GAME_DEPLOY: {
-            // handling exceptions
-            if (action.error) {
-                return {
-                    ...state,
-                    errors: [
-                        ...state.errors,
-                        action.payload,
-                    ],
-                };
-            }
-
             const {playerId, anchorCoords, direction, length} = action.payload;
             const {x, y} = anchorCoords;
 
