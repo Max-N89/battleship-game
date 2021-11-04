@@ -101,21 +101,24 @@ function createGameInitState() {
                 height: 10,
             },
             ships: {
-                ids: ["battleship", "cruiser", "destroyer", "submarine"],
                 entities: {
                     battleship: {
+                        id: "battleship",
                         length: 4,
                         amount: 1,
                     },
                     cruiser: {
+                        id: "cruiser",
                         length: 3,
                         amount: 2,
                     },
                     destroyer: {
+                        id: "destroyer",
                         length: 2,
                         amount: 3,
                     },
                     submarine: {
+                        id: "submarine",
                         length: 1,
                         amount: 4,
                     },
@@ -123,7 +126,6 @@ function createGameInitState() {
             },
         },
         players: {
-            ids: [...PLAYERS_IDS],
             entities: createPlayersInitEntities(PLAYERS_IDS),
         },
         errors: [],
@@ -133,6 +135,7 @@ function createGameInitState() {
 function createPlayersInitEntities(ids) {
     return ids.reduce((acc, id) => {
         acc[id] = {
+            id,
             deploymentHistory: [],
             shotsHistory: [],
         };
