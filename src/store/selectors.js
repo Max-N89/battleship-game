@@ -24,10 +24,10 @@ export const selectPlayerDeploymentMap = createSelector(
     (deploymentHistory, gridDescription) => {
         if (!deploymentHistory || !gridDescription) return;
 
-        const deploymentMap = new Array(gridDescription.height - 1)
+        const deploymentMap = new Array(gridDescription.height)
             .fill(null)
             .map(row => (
-                new Array(gridDescription.width - 1)
+                new Array(gridDescription.width)
                     .fill(null)
                     .map(cell => (
                         {
