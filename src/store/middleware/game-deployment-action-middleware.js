@@ -4,18 +4,22 @@ import validateGameDeploymentAction from "../features/validate-game-deployment-a
 
 const gameDeploymentActionMiddleware = store => next => action => {
     if (action.type === STORE_ACTIONS_TYPES.GAME_DEPLOY) {
-        const deploymentMap = selectPlayerDeploymentMap(
-            store.getState(),
-            action.payload.playerId
-        );
+        // action validation
+        if (!action.error) {
+            const deploymentMap = selectPlayerDeploymentMap(
+                store.getState(),
+                action.payload.playerId
+            );
 
-        try {
-            validateGameDeploymentAction(action, deploymentMap);
-        } catch (e) {
-            console.log(e);
-            return next({
-                type: "game/error",
-            });
+            try {
+                validateGameDeploymentAction(action, deploymentMap);
+            } catch (e) {
+                return next({
+                    type: action.type,
+                    error: true,
+                    payload: e,
+                });
+            }
         }
     }
 

@@ -5,6 +5,17 @@ const {GAME_DEPLOY, GAME_SHOOT, GAME_RESET} = STORE_ACTIONS_TYPES;
 function gameReducer(state = createGameInitState(), action) {
     switch (action.type) {
         case GAME_DEPLOY: {
+            // handling exceptions
+            if (action.error) {
+                return {
+                    ...state,
+                    errors: [
+                        ...state.errors,
+                        action.payload,
+                    ],
+                };
+            }
+
             const {playerId, anchorCoords, direction, length} = action.payload;
             const {x, y} = anchorCoords;
 
@@ -110,6 +121,7 @@ function createGameInitState() {
             ids: [...PLAYERS_IDS],
             entities: createPlayersInitEntities(PLAYERS_IDS),
         },
+        errors: [],
     };
 }
 
