@@ -1,11 +1,69 @@
-export function selectGameGridDescription(state) {
-    return state.game?.settings?.grid;
-}
+import {createSelector} from "reselect";
 
-export function selectPlayerDeploymentHistory(state, playerId) {
-    return state.game?.players?.entities?.[playerId]?.deploymentHistory;
-}
+import {DEPLOYMENT_DIRECTIONS} from "./constants";
 
-export function selectPlayerShotsHistory(state, playerId) {
-    return state.game?.players?.entities?.[playerId]?.shotsHistory;
-}
+const {HORIZONTAL, VERTICAL} = DEPLOYMENT_DIRECTIONS;
+
+export const selectGameGridDescription = state => (
+    state.game?.settings?.grid
+);
+
+export const selectPlayerDeploymentHistory = (state, playerId) => (
+    state.game?.players?.entities?.[playerId]?.deploymentHistory
+);
+
+export const selectPlayerShotsHistory = (state, playerId) => (
+    state.game?.players?.entities?.[playerId]?.shotsHistory
+);
+
+export const selectPlayerDeploymentMap = createSelector(
+    [
+        (state, playerId) => selectPlayerDeploymentHistory(state, playerId),
+        selectGameGridDescription,
+    ],
+    (deploymentHistory, gridDescription) => {
+        if (!deploymentHistory || !gridDescription) return;
+
+        const deploymentMap = new Array(gridDescription.height - 1)
+            .fill(null)
+            .map(row => (
+                new Array(gridDescription.width - 1)
+                    .fill(null)
+                    .map(cell => (
+                        {
+                            isOccupied: false,
+                        }
+                    ))
+            ));
+
+        deploymentHistory.forEach(previousDeployment => {
+            const {
+                anchorCoords: {
+                    x: anchorXCoord,
+                    y: anchorYCoord,
+                },
+                direction: deploymentDirection,
+                length: shipLength,
+            } = previousDeployment;
+
+            switch (deploymentDirection) {
+                case HORIZONTAL: {
+                    for (let x = anchorXCoord; x <= anchorXCoord + shipLength - 1; x++) {
+                        deploymentMap[anchorYCoord][x].isOccupied = true;
+                    }
+
+                    break;
+                }
+                case VERTICAL: {
+                    for (let y = anchorYCoord; y <= anchorYCoord + shipLength - 1; y++) {
+                        deploymentMap[y][anchorXCoord].isOccupied = true;
+                    }
+
+                    break;
+                }
+            }
+        });
+
+        return deploymentMap;
+    }
+);

@@ -2,8 +2,8 @@ import {createStore, applyMiddleware} from "redux";
 import {composeWithDevTools} from "redux-devtools-extension";
 
 import rootReducer from "./reducers/root-reducer";
-import gameShotActionMiddleware from "./addons/game-shot-action-middleware";
-import gameDeploymentActionMiddleware from "./addons/game-deployment-action-middleware";
+import gameShotActionMiddleware from "./middleware/game-shot-action-middleware";
+import gameDeploymentActionMiddleware from "./middleware/game-deployment-action-middleware";
 
 // *** PRELOADED STATE ***
 
@@ -19,14 +19,9 @@ if (persistedGameString) {
 
 // *** MIDDLEWARE ***
 
-const middleware = [
-    gameDeploymentActionMiddleware,
-    gameShotActionMiddleware,
-];
+const middleware = [gameDeploymentActionMiddleware, gameShotActionMiddleware];
 const middlewareEnhancer = applyMiddleware(...middleware);
-const composedEnhancer = composeWithDevTools(
-    middlewareEnhancer,
-);
+const composedEnhancer = composeWithDevTools(middlewareEnhancer);
 
 // *** STORE ***
 

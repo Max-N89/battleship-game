@@ -8,8 +8,13 @@ const gameShotActionMiddleware = store => next => action => {
         const shotsHistory = selectPlayerShotsHistory(state, action.payload.playerId);
         const gridDescription = selectGameGridDescription(state);
 
-        if (shotsHistory && gridDescription) {
-            validateGameShotAction(action.payload, shotsHistory, gridDescription);
+        try {
+            validateGameShotAction(action, shotsHistory, gridDescription);
+        } catch (e) {
+            console.log(e);
+            return next({
+                type: "game/error",
+            });
         }
     }
 

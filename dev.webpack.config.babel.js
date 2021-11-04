@@ -21,6 +21,7 @@ const config = {
         "app-vendors": [
             "redux",
             "redux-devtools-extension",
+            "reselect",
         ],
     },
     output: {
