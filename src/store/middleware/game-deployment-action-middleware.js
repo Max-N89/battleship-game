@@ -1,25 +1,27 @@
-import {STORE_ACTIONS_TYPES} from "../constants";
+import {gameDeploy, gameError} from "../slices/game";
 import {selectPlayerDeploymentMap} from "../selectors";
-import validateGameDeploymentAction from "../features/validate-game-deployment-action";
+import validateGameDeploymentAction from "../supplements/validate-game-deployment-action";
+import {ActionValidationError} from "../supplements/store-errors";
 
 const gameDeploymentActionMiddleware = store => next => action => {
-    if (action.type === STORE_ACTIONS_TYPES.GAME_DEPLOY) {
+    if (action.type === `${gameDeploy}`) {
         // action validation
-        if (!action.error) {
-            const deploymentMap = selectPlayerDeploymentMap(
-                store.getState(),
-                action.payload.playerId
-            );
+        const state = store.getState();
+        const deploymentMap = selectPlayerDeploymentMap(
+            state,
+            action.payload.playerId
+        );
 
-            try {
-                validateGameDeploymentAction(action, deploymentMap);
-            } catch (e) {
-                return next({
-                    type: action.type,
-                    error: true,
-                    payload: e,
-                });
+        try {
+            validateGameDeploymentAction(action, deploymentMap);
+        } catch (e) {
+            if (!(e instanceof ActionValidationError)) {
+                throw e;
             }
+
+            const {message, cause} = e;
+
+            return store.dispatch(gameError(message, cause));
         }
     }
 

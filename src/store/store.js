@@ -1,9 +1,9 @@
-import {createStore, applyMiddleware} from "redux";
-import {composeWithDevTools} from "redux-devtools-extension";
+import {configureStore} from "@reduxjs/toolkit";
 
-import rootReducer from "./reducers/root-reducer";
-import gameShotActionMiddleware from "./middleware/game-shot-action-middleware";
+import gameSliceReducer from "./slices/game";
 import gameDeploymentActionMiddleware from "./middleware/game-deployment-action-middleware";
+import gameShotActionMiddleware from "./middleware/game-shot-action-middleware";
+
 
 // *** PRELOADED STATE ***
 
@@ -19,16 +19,21 @@ if (persistedGameString) {
 
 // *** MIDDLEWARE ***
 
-const middleware = [gameDeploymentActionMiddleware, gameShotActionMiddleware];
-const middlewareEnhancer = applyMiddleware(...middleware);
-const composedEnhancer = composeWithDevTools(middlewareEnhancer);
+const middleware = getDefaultMiddleware => ([
+    ...getDefaultMiddleware(),
+    gameDeploymentActionMiddleware,
+    gameShotActionMiddleware,
+]);
 
 // *** STORE ***
 
-const store = createStore(
-    rootReducer,
+const store = configureStore({
+    reducer: {
+        game: gameSliceReducer,
+    },
     preloadedState,
-    composedEnhancer,
-);
+    middleware,
+    devTools: true,
+})
 
 export default store;

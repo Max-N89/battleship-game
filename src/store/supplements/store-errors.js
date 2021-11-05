@@ -6,9 +6,9 @@ class StoreError extends Error{
 }
 
 class ActionValidationError extends StoreError{
-    constructor(message, action) {
+    constructor(message, cause) {
         super(message);
-        this.causedByAction = action;
+        this.cause = cause;
     }
 }
 

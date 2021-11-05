@@ -1,24 +1,25 @@
-import {STORE_ACTIONS_TYPES} from "../constants";
+import {ActionValidationError} from "../supplements/store-errors";
+import {gameShoot, gameError} from "../slices/game";
 import {selectGameGridDescription, selectPlayerShotsHistory} from "../selectors";
-import validateGameShotAction from "../features/validate-game-shot-action";
+import validateGameShotAction from "../supplements/validate-game-shot-action";
 
 const gameShotActionMiddleware = store => next => action => {
-    if (action.type === STORE_ACTIONS_TYPES.GAME_SHOOT) {
+    if (action.type === `${gameShoot}`) {
         // action validation
-        if (!action.error) {
-            const state = store.getState();
-            const shotsHistory = selectPlayerShotsHistory(state, action.payload.playerId);
-            const gridDescription = selectGameGridDescription(state);
+        const state = store.getState();
+        const shotsHistory = selectPlayerShotsHistory(state, action.payload.playerId);
+        const gridDescription = selectGameGridDescription(state);
 
-            try {
-                validateGameShotAction(action, shotsHistory, gridDescription);
-            } catch (e) {
-                return next({
-                    type: action.type,
-                    error: true,
-                    payload: e,
-                });
+        try {
+            validateGameShotAction(action, shotsHistory, gridDescription);
+        } catch (e) {
+            if (!(e instanceof ActionValidationError)) {
+                throw e;
             }
+
+            const {message, cause} = e;
+
+            return store.dispatch(gameError(message, cause));
         }
     }
 

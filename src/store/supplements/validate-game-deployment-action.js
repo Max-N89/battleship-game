@@ -9,7 +9,7 @@ function validateGameDeploymentAction(action, deploymentMap) {
         },
         direction: deploymentDirection,
         length: shipLength,
-    } = action.payload;
+    } = action.payload.deploymentDescription;
 
     const lastXCoord = deploymentMap[0].length - 1;
     const lastYCoord = deploymentMap.length - 1;
@@ -19,12 +19,17 @@ function validateGameDeploymentAction(action, deploymentMap) {
 
     let errorMessage;
 
+    const errorCause = {
+        action,
+        deploymentMap,
+    };
+
     // check for anchor coordinates are in range between (0, 0) and (lastXCoord, lastYCoord)
     {
         if (anchorXCoord < 0 || anchorXCoord > lastXCoord || anchorYCoord < 0 || anchorYCoord > lastYCoord) {
             errorMessage = "Deployment anchor is out of game grid.";
 
-            throw new ActionValidationError(errorMessage, action);
+            throw new ActionValidationError(errorMessage, errorCause);
         }
     }
 
@@ -38,7 +43,7 @@ function validateGameDeploymentAction(action, deploymentMap) {
         ) {
             errorMessage = "Ship doesn't fit into game grid.";
 
-            throw new ActionValidationError(errorMessage, action);
+            throw new ActionValidationError(errorMessage, errorCause);
         }
     }
 
@@ -63,7 +68,7 @@ function validateGameDeploymentAction(action, deploymentMap) {
                 if (deploymentMap[y][x].isOccupied) {
                     errorMessage = "Ship is blocked by previous single or multiple deployments.";
 
-                    throw new ActionValidationError(errorMessage, action);
+                    throw new ActionValidationError(errorMessage, errorCause);
                 }
             }
         }

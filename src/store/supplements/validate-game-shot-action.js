@@ -6,19 +6,25 @@ function validateGameShotAction(action, shotsHistory, gridDescription) {
             x: shotXCoord,
             y: shotYCoord,
         },
-    } = action.payload;
+    } = action.payload.shotDescription;
 
     const lastXCoord = gridDescription.width - 1;
     const lastYCoord = gridDescription.height - 1;
 
     let errorMessage;
 
+    const errorCause = {
+        action,
+        shotsHistory,
+        gridDescription,
+    };
+
     // check for shot coordinates are in range between (0, 0) and (lastXCoord, lastYCoord)
     {
         if (shotXCoord < 0 || shotXCoord > lastXCoord || shotYCoord < 0 || shotYCoord > lastYCoord) {
             errorMessage = "Shot coordinates are out of game grid.";
 
-            throw new ActionValidationError(errorMessage, action);
+            throw new ActionValidationError(errorMessage, errorCause);
         }
     }
 
@@ -26,9 +32,9 @@ function validateGameShotAction(action, shotsHistory, gridDescription) {
     {
         shotsHistory.forEach(({coords: {x: prevShotXCoord, y: prevShotYCoord}}) => {
             if (shotXCoord === prevShotXCoord && shotYCoord === prevShotYCoord) {
-                errorMessage = "The shot was already made with the same coordinates.";
+                errorMessage = "There is a shot with the same coordinates.";
 
-                throw new ActionValidationError(errorMessage, action);
+                throw new ActionValidationError(errorMessage, errorCause);
             }
         });
     }

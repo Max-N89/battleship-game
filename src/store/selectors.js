@@ -1,11 +1,11 @@
-import {createSelector} from "reselect";
+import {createSelector} from "@reduxjs/toolkit";
 
 import {DEPLOYMENT_DIRECTIONS} from "./constants";
 
 const {HORIZONTAL, VERTICAL} = DEPLOYMENT_DIRECTIONS;
 
 export const selectGameGridDescription = state => (
-    state.game?.settings?.grid
+    state.game?.settings?.gridDescription
 );
 
 export const selectPlayerDeploymentHistory = (state, playerId) => (
