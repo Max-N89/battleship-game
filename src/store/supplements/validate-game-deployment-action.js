@@ -1,5 +1,7 @@
 import {DEPLOYMENT_DIRECTIONS} from "../constants";
-import {ActionValidationError} from "./store-errors";
+import {GameError} from "../../custom-errors";
+
+const {DEPLOYMENT} = GameError.MESSAGES;
 
 function validateGameDeploymentAction(action, deploymentMap) {
     const {
@@ -27,9 +29,9 @@ function validateGameDeploymentAction(action, deploymentMap) {
     // check for anchor coordinates are in range between (0, 0) and (lastXCoord, lastYCoord)
     {
         if (anchorXCoord < 0 || anchorXCoord > lastXCoord || anchorYCoord < 0 || anchorYCoord > lastYCoord) {
-            errorMessage = "Deployment anchor is out of game grid.";
+            errorMessage = DEPLOYMENT.IS_OUTSIDE;
 
-            throw new ActionValidationError(errorMessage, errorCause);
+            throw new GameError(errorMessage, errorCause);
         }
     }
 
@@ -41,9 +43,9 @@ function validateGameDeploymentAction(action, deploymentMap) {
             isDeploymentVertical &&
             anchorYCoord + shipLength - 1 > lastYCoord
         ) {
-            errorMessage = "Ship doesn't fit into game grid.";
+            errorMessage = DEPLOYMENT.DOES_N0T_FIT;
 
-            throw new ActionValidationError(errorMessage, errorCause);
+            throw new GameError(errorMessage, errorCause);
         }
     }
 
@@ -66,9 +68,9 @@ function validateGameDeploymentAction(action, deploymentMap) {
         for (let y = fromY; y <= toY; y++) {
             for (let x = fromX; x <= toX; x++) {
                 if (deploymentMap[y][x].isOccupied) {
-                    errorMessage = "Ship is blocked by previous single or multiple deployments.";
+                    errorMessage = DEPLOYMENT.IS_BLOCKED;
 
-                    throw new ActionValidationError(errorMessage, errorCause);
+                    throw new GameError(errorMessage, errorCause);
                 }
             }
         }

@@ -1,4 +1,4 @@
-import {ActionValidationError} from "../supplements/store-errors";
+import {GameError} from "../../custom-errors";
 import {gameShoot, gameError} from "../slices/game";
 import {selectGameGridDescription, selectPlayerShotsHistory} from "../selectors";
 import validateGameShotAction from "../supplements/validate-game-shot-action";
@@ -13,7 +13,7 @@ const gameShotActionMiddleware = store => next => action => {
         try {
             validateGameShotAction(action, shotsHistory, gridDescription);
         } catch (e) {
-            if (!(e instanceof ActionValidationError)) {
+            if (!(e instanceof GameError)) {
                 throw e;
             }
 

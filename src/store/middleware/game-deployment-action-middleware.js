@@ -1,7 +1,7 @@
 import {gameDeploy, gameError} from "../slices/game";
 import {selectPlayerDeploymentMap} from "../selectors";
 import validateGameDeploymentAction from "../supplements/validate-game-deployment-action";
-import {ActionValidationError} from "../supplements/store-errors";
+import {GameError} from "../../custom-errors";
 
 const gameDeploymentActionMiddleware = store => next => action => {
     if (action.type === `${gameDeploy}`) {
@@ -15,7 +15,7 @@ const gameDeploymentActionMiddleware = store => next => action => {
         try {
             validateGameDeploymentAction(action, deploymentMap);
         } catch (e) {
-            if (!(e instanceof ActionValidationError)) {
+            if (!(e instanceof GameError)) {
                 throw e;
             }
 

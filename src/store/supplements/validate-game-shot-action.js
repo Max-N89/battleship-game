@@ -1,4 +1,6 @@
-import {ActionValidationError} from "./store-errors";
+import {GameError} from "../../custom-errors";
+
+const {SHOT} = GameError.MESSAGES;
 
 function validateGameShotAction(action, shotsHistory, gridDescription) {
     const {
@@ -22,9 +24,9 @@ function validateGameShotAction(action, shotsHistory, gridDescription) {
     // check for shot coordinates are in range between (0, 0) and (lastXCoord, lastYCoord)
     {
         if (shotXCoord < 0 || shotXCoord > lastXCoord || shotYCoord < 0 || shotYCoord > lastYCoord) {
-            errorMessage = "Shot coordinates are out of game grid.";
+            errorMessage = SHOT.IS_OUTSIDE;
 
-            throw new ActionValidationError(errorMessage, errorCause);
+            throw new GameError(errorMessage, errorCause);
         }
     }
 
@@ -32,9 +34,9 @@ function validateGameShotAction(action, shotsHistory, gridDescription) {
     {
         shotsHistory.forEach(({coords: {x: prevShotXCoord, y: prevShotYCoord}}) => {
             if (shotXCoord === prevShotXCoord && shotYCoord === prevShotYCoord) {
-                errorMessage = "There is a shot with the same coordinates.";
+                errorMessage = SHOT.IS_SAME;
 
-                throw new ActionValidationError(errorMessage, errorCause);
+                throw new GameError(errorMessage, errorCause);
             }
         });
     }
