@@ -28,8 +28,6 @@
     "webpack-dev-server": "^4.3.1"
   },
   "dependencies": {
-    "redux": "^4.1.1",
-    "redux-devtools-extension": "^2.13.9",
-    "reselect": "^4.1.2"
+    "@reduxjs/toolkit": "^1.6.2"
   }
 }

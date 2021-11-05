@@ -19,9 +19,7 @@ const config = {
             ]
         },
         "app-vendors": [
-            "redux",
-            "redux-devtools-extension",
-            "reselect",
+            "@reduxjs/toolkit",
         ],
     },
     output: {
