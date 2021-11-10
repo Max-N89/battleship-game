@@ -17,9 +17,7 @@ const gameShootMiddleware = store => next => action => {
                 throw e;
             }
 
-            const {message, cause} = e;
-
-            return store.dispatch(gameError(message, cause));
+            return store.dispatch(gameError(e));
         }
     }
 

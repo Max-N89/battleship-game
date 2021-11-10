@@ -41,7 +41,9 @@ const gameSlice = createSlice({
             reducer(state, action) {
                 state.errors.push(action.payload);
             },
-            prepare(message, cause) {
+            prepare(error) {
+                const {message, cause} = error;
+
                 return {
                     payload: {
                         message,
