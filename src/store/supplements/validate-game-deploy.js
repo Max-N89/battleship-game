@@ -1,9 +1,9 @@
-import {DEPLOYMENT_DIRECTIONS} from "../constants";
+import {DEPLOYMENT_DIRECTIONS} from "../../constants";
 import {GameError} from "../../custom-errors";
 
-const {DEPLOYMENT} = GameError.MESSAGES;
+const {DEFAULT_MESSAGES: DEFAULT_ERROR_MESSAGES} = GameError;
 
-function validateGameDeploymentAction(action, deploymentMap) {
+function validateGameDeploy(action, deploymentMap) {
     const {
         anchorCoords: {
             x: anchorXCoord,
@@ -29,7 +29,7 @@ function validateGameDeploymentAction(action, deploymentMap) {
     // check for anchor coordinates are in range between (0, 0) and (lastXCoord, lastYCoord)
     {
         if (anchorXCoord < 0 || anchorXCoord > lastXCoord || anchorYCoord < 0 || anchorYCoord > lastYCoord) {
-            errorMessage = DEPLOYMENT.IS_OUTSIDE;
+            errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_OUTSIDE;
 
             throw new GameError(errorMessage, errorCause);
         }
@@ -43,7 +43,7 @@ function validateGameDeploymentAction(action, deploymentMap) {
             isDeploymentVertical &&
             anchorYCoord + shipLength - 1 > lastYCoord
         ) {
-            errorMessage = DEPLOYMENT.DOES_N0T_FIT;
+            errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.DOES_N0T_FIT;
 
             throw new GameError(errorMessage, errorCause);
         }
@@ -68,7 +68,7 @@ function validateGameDeploymentAction(action, deploymentMap) {
         for (let y = fromY; y <= toY; y++) {
             for (let x = fromX; x <= toX; x++) {
                 if (deploymentMap[y][x].isOccupied) {
-                    errorMessage = DEPLOYMENT.IS_BLOCKED;
+                    errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_BLOCKED;
 
                     throw new GameError(errorMessage, errorCause);
                 }
@@ -77,4 +77,4 @@ function validateGameDeploymentAction(action, deploymentMap) {
     }
 }
 
-export default validateGameDeploymentAction;
+export default validateGameDeploy;

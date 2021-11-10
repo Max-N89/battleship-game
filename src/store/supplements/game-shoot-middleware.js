@@ -1,9 +1,9 @@
-import {GameError} from "../../custom-errors";
 import {gameShoot, gameError} from "../slices/game";
 import {selectGameGridDescription, selectPlayerShotsHistory} from "../selectors";
-import validateGameShotAction from "../supplements/validate-game-shot-action";
+import validateGameShoot from "./validate-game-shoot";
+import {GameError} from "../../custom-errors";
 
-const gameShotActionMiddleware = store => next => action => {
+const gameShootMiddleware = store => next => action => {
     if (action.type === `${gameShoot}`) {
         // action validation
         const state = store.getState();
@@ -11,7 +11,7 @@ const gameShotActionMiddleware = store => next => action => {
         const gridDescription = selectGameGridDescription(state);
 
         try {
-            validateGameShotAction(action, shotsHistory, gridDescription);
+            validateGameShoot(action, shotsHistory, gridDescription);
         } catch (e) {
             if (!(e instanceof GameError)) {
                 throw e;
@@ -26,4 +26,4 @@ const gameShotActionMiddleware = store => next => action => {
     return next(action);
 };
 
-export default gameShotActionMiddleware;
+export default gameShootMiddleware;

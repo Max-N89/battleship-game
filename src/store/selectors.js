@@ -1,6 +1,6 @@
 import {createSelector} from "@reduxjs/toolkit";
 
-import {DEPLOYMENT_DIRECTIONS} from "./constants";
+import {DEPLOYMENT_DIRECTIONS} from "../constants";
 
 const {HORIZONTAL, VERTICAL} = DEPLOYMENT_DIRECTIONS;
 

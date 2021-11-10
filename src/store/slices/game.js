@@ -53,14 +53,12 @@ const gameSlice = createSlice({
     }
 });
 
-const {
+export const {
     deploy: gameDeploy,
     shoot: gameShoot,
     reset: gameReset,
     error: gameError,
 } = gameSlice.actions;
-
-export {gameDeploy, gameShoot, gameReset, gameError};
 
 export default gameSlice.reducer;
 

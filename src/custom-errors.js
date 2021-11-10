@@ -11,7 +11,7 @@ class GameError extends CustomError{
         this.cause = cause;
     }
 
-    static MESSAGES = {
+    static DEFAULT_MESSAGES = {
         DEPLOYMENT: {
             IS_OUTSIDE: "Deployment anchor is out of game grid.",
             DOES_N0T_FIT: "Ship doesn't fit into game grid.",

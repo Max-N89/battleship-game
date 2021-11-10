@@ -1,8 +1,8 @@
 import {GameError} from "../../custom-errors";
 
-const {SHOT} = GameError.MESSAGES;
+const {DEFAULT_MESSAGES: DEFAULT_ERROR_MESSAGES} = GameError;
 
-function validateGameShotAction(action, shotsHistory, gridDescription) {
+function validateGameShoot(action, shotsHistory, gridDescription) {
     const {
         coords: {
             x: shotXCoord,
@@ -24,7 +24,7 @@ function validateGameShotAction(action, shotsHistory, gridDescription) {
     // check for shot coordinates are in range between (0, 0) and (lastXCoord, lastYCoord)
     {
         if (shotXCoord < 0 || shotXCoord > lastXCoord || shotYCoord < 0 || shotYCoord > lastYCoord) {
-            errorMessage = SHOT.IS_OUTSIDE;
+            errorMessage = DEFAULT_ERROR_MESSAGES.SHOT.IS_OUTSIDE;
 
             throw new GameError(errorMessage, errorCause);
         }
@@ -34,7 +34,7 @@ function validateGameShotAction(action, shotsHistory, gridDescription) {
     {
         shotsHistory.forEach(({coords: {x: prevShotXCoord, y: prevShotYCoord}}) => {
             if (shotXCoord === prevShotXCoord && shotYCoord === prevShotYCoord) {
-                errorMessage = SHOT.IS_SAME;
+                errorMessage = DEFAULT_ERROR_MESSAGES.SHOT.IS_SAME;
 
                 throw new GameError(errorMessage, errorCause);
             }
@@ -42,4 +42,4 @@ function validateGameShotAction(action, shotsHistory, gridDescription) {
     }
 }
 
-export default validateGameShotAction;
+export default validateGameShoot;

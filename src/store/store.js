@@ -1,8 +1,8 @@
 import {configureStore} from "@reduxjs/toolkit";
 
-import gameSliceReducer from "./slices/game";
-import gameDeploymentActionMiddleware from "./middleware/game-deployment-action-middleware";
-import gameShotActionMiddleware from "./middleware/game-shot-action-middleware";
+import gameSlice from "./slices/game";
+import gameDeployMiddleware from "./supplements/game-deploy-middleware";
+import gameShootMiddleware from "./supplements/game-shoot-middleware";
 
 
 // *** PRELOADED STATE ***
@@ -21,15 +21,15 @@ if (persistedGameString) {
 
 const middleware = getDefaultMiddleware => ([
     ...getDefaultMiddleware(),
-    gameDeploymentActionMiddleware,
-    gameShotActionMiddleware,
+    gameDeployMiddleware,
+    gameShootMiddleware,
 ]);
 
 // *** STORE ***
 
 const store = configureStore({
     reducer: {
-        game: gameSliceReducer,
+        game: gameSlice,
     },
     preloadedState,
     middleware,

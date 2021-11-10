@@ -1,9 +1,9 @@
 import {gameDeploy, gameError} from "../slices/game";
 import {selectPlayerDeploymentMap} from "../selectors";
-import validateGameDeploymentAction from "../supplements/validate-game-deployment-action";
+import validateGameDeploy from "./validate-game-deploy";
 import {GameError} from "../../custom-errors";
 
-const gameDeploymentActionMiddleware = store => next => action => {
+const gameDeployMiddleware = store => next => action => {
     if (action.type === `${gameDeploy}`) {
         // action validation
         const state = store.getState();
@@ -13,7 +13,7 @@ const gameDeploymentActionMiddleware = store => next => action => {
         );
 
         try {
-            validateGameDeploymentAction(action, deploymentMap);
+            validateGameDeploy(action, deploymentMap);
         } catch (e) {
             if (!(e instanceof GameError)) {
                 throw e;
@@ -28,4 +28,4 @@ const gameDeploymentActionMiddleware = store => next => action => {
     return next(action);
 };
 
-export default gameDeploymentActionMiddleware;
+export default gameDeployMiddleware;
