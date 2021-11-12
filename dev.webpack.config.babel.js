@@ -14,7 +14,14 @@ const config = {
     entry: {
         app: {
             import: "./src/index.js",
+            dependOn: [
+                "app-vendors",
+            ]
         },
+        "app-vendors": [
+            "react",
+            "react-dom",
+        ]
     },
     output: {
         filename: "[name].bundle.js",
