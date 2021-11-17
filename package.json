@@ -1,6 +1,6 @@
 {
   "name": "battleship-game",
-  "description": "A game web application.",
+  "description": "A React game web application.",
   "private": true,
   "scripts": {
     "dev": "webpack serve --open --config dev.webpack.config.babel.js"
@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "@reduxjs/toolkit": "^1.6.2"
   }
 }

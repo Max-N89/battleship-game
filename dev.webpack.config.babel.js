@@ -21,6 +21,7 @@ const config = {
         "app-vendors": [
             "react",
             "react-dom",
+            "@reduxjs/toolkit",
         ]
     },
     output: {
