@@ -22,6 +22,7 @@ const config = {
             "react",
             "react-dom",
             "@reduxjs/toolkit",
+            "react-redux",
         ]
     },
     output: {
