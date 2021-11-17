@@ -6,3 +6,8 @@ export const DEPLOYMENT_DIRECTIONS = {
     HORIZONTAL: "horizontal",
     VERTICAL: "vertical",
 }
+
+export const GAME_STATUSES = {
+    IDLE: "idle",
+    IN_PROGRESS: "in progress",
+}
