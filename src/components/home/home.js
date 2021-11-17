@@ -1,9 +1,6 @@
 import React, {Component, Fragment} from "react";
 
-import Header from "../generic/header";
-import Footer from "../generic/footer";
 import MessageBar from "../generic/message-bar";
-
 import Background from "./background";
 import DemoGame from "./demo-game";
 
@@ -14,18 +11,16 @@ export default class Home extends Component {
     }
 
     render() {
+        const {onStartClick} = this.props;
+
         return (
-            <Fragment>
-                <Header/>
-                <main>
-                    <Background/>
-                    <DemoGame/>
-                    <MessageBar/>
-                    <MessageBar/>
-                    <button>START</button>
-                </main>
-                <Footer/>
-            </Fragment>
+            <main>
+                {/*<Background/>*/}
+                {/*<DemoGame/>*/}
+                {/*<MessageBar/>*/}
+                {/*<MessageBar/>*/}
+                <button onClick={onStartClick}>START</button>
+            </main>
         );
     }
 };
