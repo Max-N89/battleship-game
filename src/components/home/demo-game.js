@@ -32,8 +32,8 @@ export default class DemoGame extends Component {
 
         return (
             <div>
-                <GameGrid map={playerOneGameMap}/>
-                <GameGrid map={playerTwoGameMap}/>
+                <GameGrid gridMap={playerOneGameMap}/>
+                <GameGrid gridMap={playerTwoGameMap}/>
             </div>
         );
     }
