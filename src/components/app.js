@@ -16,22 +16,24 @@ export default class App extends Component {
             gameStatus: GAME_STATUSES.IDLE
         };
 
-        this.handleStartClick = this.handleStartClick.bind(this);
+        this.onClickStartButtonHandler = this.onClickStartButtonHandler.bind(this);
     }
 
-    handleStartClick() {
+    onClickStartButtonHandler() {
         this.setState({
             gameStatus: GAME_STATUSES.IN_PROGRESS
         });
     }
 
     render() {
+        const {gameStatus} = this.state;
+
         return (
             <Fragment>
                 <Header/>
                 {
-                    this.state.gameStatus === GAME_STATUSES.IDLE ?
-                        <Home onStartClick={this.handleStartClick}/> :
+                    gameStatus === GAME_STATUSES.IDLE ?
+                        <Home onClickStartButton={this.onClickStartButtonHandler}/> :
                         <Game/>
                 }
                 <Footer/>
