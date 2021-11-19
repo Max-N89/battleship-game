@@ -2,8 +2,8 @@ import React from "react";
 
 export default function GameMenu() {
     return (
-        <form>
+        <div>
 
-        </form>
+        </div>
     );
 };
