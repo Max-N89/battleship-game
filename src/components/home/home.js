@@ -3,7 +3,7 @@ import React, {Component, Fragment} from "react";
 import MessageBar from "../generic/message-bar";
 import AuthForm from "../generic/auth-form";
 
-import Background from "./background";
+import BackgroundVideo from "./background-video";
 import DemoGame from "./demo-game";
 
 export default class Home extends Component {
@@ -16,7 +16,7 @@ export default class Home extends Component {
 
         return (
             <main>
-                {/*<Background/>*/}
+                {/*<BackgroundVideo/>*/}
                 {/*<DemoGame/>*/}
                 {/*<MessageBar/>*/}
                 {/*<MessageBar/>*/}
