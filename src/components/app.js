@@ -6,7 +6,7 @@ import Footer from "./generic/footer";
 import Home from "./home/home";
 import Game from "./game/game";
 
-import {GAME_STATUSES} from "./constants";
+import {GAME_STATUSES} from "../constants";
 
 export default class App extends Component {
     constructor(props) {
