@@ -17,7 +17,7 @@ export default class Home extends Component {
         return (
             <main>
                 {/*<BackgroundVideo/>*/}
-                {/*<DemoGame/>*/}
+                <DemoGame/>
                 {/*<MessageBar/>*/}
                 {/*<MessageBar/>*/}
                 {/*<AuthForm/>*/}
