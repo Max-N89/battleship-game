@@ -1,4 +1,4 @@
-import {createSlice} from "@reduxjs/toolkit";
+import {createSlice, nanoid} from "@reduxjs/toolkit";
 
 const gameSlice = createSlice({
     name: "game",
@@ -35,7 +35,10 @@ const gameSlice = createSlice({
             }
         },
         reset(state) {
-            state.players.entities = createInitPlayersEntities(state.players.ids);
+            Object.values(state.players.entities).forEach(entity => {
+                entity.deploymentHistory = [];
+                entity.shotsHistory = [];
+            });
         },
         error: {
             reducer(state, action) {
@@ -67,7 +70,7 @@ export default gameSlice.reducer;
 // *** SUPPLEMENTS ***
 
 function createInitState() {
-    const PLAYERS_IDS = ["a", "b"];
+    const initPlayersEntities = createInitPlayersEntities();
 
     return {
         settings: {
@@ -103,20 +106,29 @@ function createInitState() {
             },
         },
         players: {
-            ids: [...PLAYERS_IDS],
-            entities: createInitPlayersEntities(PLAYERS_IDS),
+            ids: Object.keys(initPlayersEntities),
+            entities: initPlayersEntities,
         },
         errors: [],
     };
 }
 
-function createInitPlayersEntities(ids) {
-    return ids.reduce((acc, id) => {
-        acc[id] = {
-            id,
-            deploymentHistory: [],
-            shotsHistory: [],
-        };
+function createInitPlayersEntities() {
+    const playerOneEntity = {
+        id: nanoid(),
+    };
+    const playerTwoEntity = {
+        id: nanoid(),
+    }
+
+    playerOneEntity.opponentId = playerTwoEntity.id;
+    playerTwoEntity.opponentId = playerOneEntity.id;
+
+    return [playerOneEntity, playerTwoEntity].reduce((acc, entity) => {
+        entity.deploymentHistory = [];
+        entity.shotsHistory = [];
+
+        acc[entity.id] = entity;
 
         return acc;
     }, {});
