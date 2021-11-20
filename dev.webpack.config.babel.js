@@ -60,7 +60,7 @@ const config = {
     plugins: [
         new HTMLWebpackPlugin({
             title: "Battleship Game",
-            favicon: "./assets/icons/battleship-icon.png",
+            favicon: "./assets/icons/favicon-32.png",
         })
     ]
 }
