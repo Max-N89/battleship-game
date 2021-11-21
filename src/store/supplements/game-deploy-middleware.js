@@ -1,5 +1,5 @@
 import {gameDeploy, gameError} from "../slices/game";
-import {selectPlayerDeploymentMap} from "../selectors";
+import {selectPlayerDeploymentMap} from "../game-selectors";
 import validateGameDeploy from "./validate-game-deploy";
 import {GameError} from "../../custom-errors";
 

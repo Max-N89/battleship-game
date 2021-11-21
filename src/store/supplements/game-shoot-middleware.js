@@ -1,5 +1,5 @@
 import {gameShoot, gameError} from "../slices/game";
-import {selectGameGridDescription, selectPlayerShotsHistory} from "../selectors";
+import {selectGameGridDescription, selectPlayerShotsHistory} from "../game-selectors";
 import validateGameShoot from "./validate-game-shoot";
 import {GameError} from "../../custom-errors";
 
