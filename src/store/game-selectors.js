@@ -36,11 +36,11 @@ export const selectPlayerDeploymentMap = createSelector(
     (deploymentHistory, gridDescription) => {
         if (!deploymentHistory || !gridDescription) return;
 
-        const map = createEmptyMap(gridDescription.width, gridDescription.height);
+        const gridMap = new GridMap(gridDescription.width, gridDescription.height);
 
-        addDeploymentsToMap(map, deploymentHistory);
+        gridMap.addDeployments(deploymentHistory);
 
-        return map;
+        return gridMap;
     }
 );
 
@@ -53,71 +53,81 @@ export const selectPlayerGameMap = createSelector(
     (playerDeploymentHistory, opponentShotsHistory, gridDescription) => {
         if (!playerDeploymentHistory || !opponentShotsHistory || !gridDescription) return;
 
-        const map = createEmptyMap(gridDescription.width, gridDescription.height);
+        const gridMap = new GridMap(gridDescription.width, gridDescription.height);
 
-        addDeploymentsToMap(map, playerDeploymentHistory);
-        addShotsToMap(map, opponentShotsHistory);
+        gridMap.addDeployments(playerDeploymentHistory);
+        gridMap.addShots(opponentShotsHistory);
 
-        return map;
+        return gridMap;
     }
 );
 
 // *** SUPPLEMENTS ***
 
-function createEmptyMap(width, height) {
-    return  new Array(height)
-        .fill(null)
-        .map(row => (
-            new Array(width)
-                .fill(null)
-                .map(cell => (
-                    {
-                        isOccupied: false,
-                        isShooted: false,
-                    }
-                ))
-        ));
-}
+class GridMap extends Array {
+    constructor(width, height) {
+        super();
 
-function addDeploymentsToMap(map, deployments) {
-    deployments.forEach(deploymentDescription => {
-        const {
-            anchorCoords: {
-                x: anchorXCoord,
-                y: anchorYCoord,
-            },
-            direction: deploymentDirection,
-            length: shipLength,
-        } = deploymentDescription;
+        for (let yCoord = 0; yCoord <= height - 1; yCoord++) {
+            const row = [];
 
-        switch (deploymentDirection) {
-            case HORIZONTAL: {
-                for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + shipLength - 1; xCoord++) {
-                    map[anchorYCoord][xCoord].isOccupied = true;
-                }
+            for (let xCoord = 0; xCoord <= width - 1; xCoord++) {
+                const cell = {
+                    isOccupied: false,
+                    isShooted: false,
+                    coords: {
+                        x: xCoord,
+                        y: yCoord,
+                    },
+                };
 
-                break;
+                row.push(cell);
             }
-            case VERTICAL: {
-                for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + shipLength - 1; yCoord++) {
-                    map[yCoord][anchorXCoord].isOccupied = true;
-                }
 
-                break;
-            }
+            this.push(row);
         }
-    });
-}
+    }
 
-function addShotsToMap(map, shots) {
-    shots.forEach(shotDescription => {
-        const {
-            coords: {
-                x: shotXCoord,
-                y: shotYCoord,
-            },
-        } = shotDescription;
+    addDeployments(deployments) {
+        deployments.forEach(deploymentDescription => {
+            const {
+                anchorCoords: {
+                    x: anchorXCoord,
+                    y: anchorYCoord,
+                },
+                direction: deploymentDirection,
+                length: shipLength,
+            } = deploymentDescription;
 
-        map[shotYCoord][shotXCoord].isShooted = true;
-    });
+            switch (deploymentDirection) {
+                case HORIZONTAL: {
+                    for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + shipLength - 1; xCoord++) {
+                        this[anchorYCoord][xCoord].isOccupied = true;
+                    }
+
+                    break;
+                }
+                case VERTICAL: {
+                    for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + shipLength - 1; yCoord++) {
+                        this[yCoord][anchorXCoord].isOccupied = true;
+                    }
+
+                    break;
+                }
+            }
+        });
+    }
+
+    addShots(shots) {
+        shots.forEach(shotDescription => {
+            const {
+                coords: {
+                    x: shotXCoord,
+                    y: shotYCoord,
+                },
+            } = shotDescription;
+
+            map[shotYCoord][shotXCoord].isShooted = true;
+        });
+    }
 }
