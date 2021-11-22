@@ -4,7 +4,7 @@ import {DEPLOYMENT_DIRECTIONS} from "../constants";
 
 const {HORIZONTAL, VERTICAL} = DEPLOYMENT_DIRECTIONS;
 
-export const selectGameGridDescription = state => (
+export const selectSettingsGridDescription = state => (
     state.game?.settings?.gridDescription
 );
 
@@ -31,7 +31,7 @@ export const selectPlayerOpponentShotsHistory = (state, playerId) => {
 export const selectPlayerDeploymentMap = createSelector(
     [
         (state, playerId) => selectPlayerDeploymentHistory(state, playerId),
-        selectGameGridDescription,
+        selectSettingsGridDescription,
     ],
     (deploymentHistory, gridDescription) => {
         if (!deploymentHistory || !gridDescription) return;
@@ -48,7 +48,7 @@ export const selectPlayerGameMap = createSelector(
     [
         (state, playerId) => selectPlayerDeploymentHistory(state, playerId),
         (state, playerId) => selectPlayerOpponentShotsHistory(state, playerId),
-        selectGameGridDescription,
+        selectSettingsGridDescription,
     ],
     (playerDeploymentHistory, opponentShotsHistory, gridDescription) => {
         if (!playerDeploymentHistory || !opponentShotsHistory || !gridDescription) return;

@@ -1,5 +1,5 @@
 import {gameShoot, gameError} from "../slices/game";
-import {selectGameGridDescription, selectPlayerShotsHistory} from "../game-selectors";
+import {selectSettingsGridDescription, selectPlayerShotsHistory} from "../game-selectors";
 import validateGameShoot from "./validate-game-shoot";
 import {GameError} from "../../custom-errors";
 
@@ -8,7 +8,7 @@ const gameShootMiddleware = store => next => action => {
         // action validation
         const state = store.getState();
         const shotsHistory = selectPlayerShotsHistory(state, action.payload.playerId);
-        const gridDescription = selectGameGridDescription(state);
+        const gridDescription = selectSettingsGridDescription(state);
 
         try {
             validateGameShoot(action, shotsHistory, gridDescription);
