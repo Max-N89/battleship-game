@@ -122,6 +122,7 @@ export default gameSlice.reducer;
 
 function createInitState() {
     const initPlayersEntities = createInitPlayersEntities();
+    const shipsEntities = createShipsEntities();
 
     return {
         settings: {
@@ -131,29 +132,8 @@ function createInitState() {
                 height: 10,
             },
             ships: {
-                ids: ["battleship", "cruiser", "destroyer", "submarine"],
-                entities: {
-                    battleship: {
-                        id: "battleship",
-                        length: 4,
-                        amount: 1,
-                    },
-                    cruiser: {
-                        id: "cruiser",
-                        length: 3,
-                        amount: 2,
-                    },
-                    destroyer: {
-                        id: "destroyer",
-                        length: 2,
-                        amount: 3,
-                    },
-                    submarine: {
-                        id: "submarine",
-                        length: 1,
-                        amount: 4,
-                    }
-                },
+                ids: Object.keys(shipsEntities),
+                entities: shipsEntities,
             },
         },
         players: {
@@ -162,6 +142,23 @@ function createInitState() {
         },
         errors: [],
     };
+}
+
+function createShipsEntities() {
+    const entities = {};
+
+    for (let length = 4, amount = 1; length > 0; length--, amount++) {
+        for (let i = 1; i <= amount; i++) {
+            const id = nanoid();
+
+            entities[id] = {
+                id,
+                length,
+            };
+        }
+    }
+
+    return entities;
 }
 
 function createInitPlayersEntities() {
