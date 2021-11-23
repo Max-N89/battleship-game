@@ -1,8 +1,8 @@
 import {createSelector} from "@reduxjs/toolkit";
 
-import {DEPLOYMENT_DIRECTIONS} from "../constants";
+import {DIRECTIONS} from "../constants";
 
-const {HORIZONTAL, VERTICAL} = DEPLOYMENT_DIRECTIONS;
+const {HORIZONTAL, VERTICAL} = DIRECTIONS;
 
 export const selectErrors = state => (
     state.game?.errors
@@ -90,70 +90,9 @@ export const selectPlayerAvailableDeploymentAnchors = createSelector(
     (deploymentMap, shipLength, deploymentDirection) => {
         if (!deploymentMap || !shipLength || !deploymentDirection) return;
 
-        const deploymentAreas = [];
 
-        const {lastYCoord, lastXCoord} = deploymentMap;
 
-        /*
-            depending on deployment direction, iterate first over Y coordinates
-            or over X coordinates (for vertical) to pick continuous deployment areas
-            in horizontal or vertical direction respectively
-        */
-
-        let continuousDeploymentArea = [];
-        let firstLoopLastCoord, secondLoopLastCoord;
-
-        switch (deploymentDirection) {
-            case HORIZONTAL:
-                firstLoopLastCoord = lastYCoord;
-                secondLoopLastCoord = lastXCoord;
-
-                break;
-            case VERTICAL:
-                firstLoopLastCoord = lastXCoord;
-                secondLoopLastCoord = lastYCoord;
-
-                break;
-        }
-
-        for (let firstLoopCoord = 0; firstLoopCoord <= firstLoopLastCoord; firstLoopCoord++) {
-            for (let secondLoopCoord = 0; secondLoopCoord <= secondLoopLastCoord; secondLoopCoord++) {
-
-                let xCoord, yCoord;
-
-                switch (deploymentDirection) {
-                    case HORIZONTAL:
-                        xCoord = secondLoopCoord;
-                        yCoord = firstLoopCoord;
-
-                        break;
-                    case VERTICAL:
-                        xCoord = firstLoopCoord;
-                        yCoord = secondLoopCoord;
-
-                        break;
-                }
-
-                if (deploymentMap[yCoord][xCoord].isUndeployable){
-                    if (continuousDeploymentArea.length) {
-                        deploymentAreas.push(continuousDeploymentArea);
-                        continuousDeploymentArea = [];
-                    }
-
-                    continue;
-                }
-
-                continuousDeploymentArea.push({x: xCoord, y: yCoord});
-            }
-
-            if (continuousDeploymentArea.length) {
-                deploymentAreas.push(continuousDeploymentArea);
-            }
-
-            continuousDeploymentArea = [];
-        }
-
-        return deploymentAreas
+        return deploymentMap.getContinuousAreas({isUndeployable: false}, deploymentDirection)
             .filter(area => area.length >= shipLength)
             .map(area => area.slice(0, area.length - (shipLength - 1)))
             .flat();
@@ -283,5 +222,75 @@ class GridMap extends Array {
 
             this[shotYCoord][shotXCoord].isShooted = true;
         });
+    }
+
+    getContinuousAreas(cellProps, direction) {
+        const continuousAreas = [];
+
+        const {lastYCoord, lastXCoord} = this;
+
+        /*
+            to pick continuous areas depending on direction,
+            iterate first over Y coordinates for horizontal direction
+            or over X coordinates for vertical direction respectively
+        */
+
+        let continuousArea = [];
+        let firstLoopLastCoord, secondLoopLastCoord;
+
+        switch (direction) {
+            case HORIZONTAL:
+                firstLoopLastCoord = lastYCoord;
+                secondLoopLastCoord = lastXCoord;
+
+                break;
+            case VERTICAL:
+                firstLoopLastCoord = lastXCoord;
+                secondLoopLastCoord = lastYCoord;
+
+                break;
+        }
+
+        for (let firstLoopCoord = 0; firstLoopCoord <= firstLoopLastCoord; firstLoopCoord++) {
+            for (let secondLoopCoord = 0; secondLoopCoord <= secondLoopLastCoord; secondLoopCoord++) {
+
+                let xCoord, yCoord;
+
+                switch (direction) {
+                    case HORIZONTAL:
+                        xCoord = secondLoopCoord;
+                        yCoord = firstLoopCoord;
+
+                        break;
+                    case VERTICAL:
+                        xCoord = firstLoopCoord;
+                        yCoord = secondLoopCoord;
+
+                        break;
+                }
+
+                if (
+                    !Object.entries(cellProps)
+                        .every(([key, value]) => this[yCoord][xCoord][key] === value)
+                ) {
+                    if (continuousArea.length) {
+                        continuousAreas.push(continuousArea);
+                        continuousArea = [];
+                    }
+
+                    continue;
+                }
+
+                continuousArea.push({x: xCoord, y: yCoord});
+            }
+
+            if (continuousArea.length) {
+                continuousAreas.push(continuousArea);
+            }
+
+            continuousArea = [];
+        }
+
+        return continuousAreas;
     }
 }

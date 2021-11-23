@@ -1,4 +1,4 @@
-import {DEPLOYMENT_DIRECTIONS} from "../../constants";
+import {DIRECTIONS} from "../../constants";
 import {GameError} from "../../custom-errors";
 
 const {DEFAULT_MESSAGES: DEFAULT_ERROR_MESSAGES} = GameError;
@@ -17,8 +17,8 @@ function validateGameDeploy(action, deploymentMap, settingsShips) {
 
     const {lastXCoord, lastYCoord} = deploymentMap;
 
-    const isDeploymentHorizontal = deploymentDirection === DEPLOYMENT_DIRECTIONS.HORIZONTAL;
-    const isDeploymentVertical = deploymentDirection === DEPLOYMENT_DIRECTIONS.VERTICAL;
+    const isDeploymentHorizontal = deploymentDirection === DIRECTIONS.HORIZONTAL;
+    const isDeploymentVertical = deploymentDirection === DIRECTIONS.VERTICAL;
 
     let errorMessage;
 
@@ -53,7 +53,7 @@ function validateGameDeploy(action, deploymentMap, settingsShips) {
     // check for undeployable cells
     {
         switch (deploymentDirection) {
-            case (DEPLOYMENT_DIRECTIONS.HORIZONTAL): {
+            case (DIRECTIONS.HORIZONTAL): {
                 for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + shipLength - 1; xCoord++) {
                     if (deploymentMap[anchorYCoord][xCoord].isUndeployable) {
                         errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_BLOCKED;
@@ -64,7 +64,7 @@ function validateGameDeploy(action, deploymentMap, settingsShips) {
 
                 break;
             }
-            case (DEPLOYMENT_DIRECTIONS.VERTICAL): {
+            case (DIRECTIONS.VERTICAL): {
                 for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + shipLength - 1; yCoord++) {
                     if (deploymentMap[yCoord][anchorXCoord].isUndeployable) {
                         errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_BLOCKED;
