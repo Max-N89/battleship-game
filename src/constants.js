@@ -5,4 +5,8 @@
 export const DIRECTIONS = {
     HORIZONTAL: "horizontal",
     VERTICAL: "vertical",
+    UP: "top",
+    DOWN: "bottom",
+    LEFT: "left",
+    RIGHT: "right",
 }
