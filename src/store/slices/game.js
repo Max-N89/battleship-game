@@ -3,11 +3,12 @@ import {createSlice, nanoid} from "@reduxjs/toolkit";
 import {
     selectPlayerUndeployedShips,
     selectPlayerAvailableDeploymentAnchors,
+    selectPlayerNextShotCoords,
 } from "../game-selectors";
 
-import {DEPLOYMENT_DIRECTIONS} from "../../constants";
+import {DIRECTIONS} from "../../constants";
 
-const {HORIZONTAL, VERTICAL} = DEPLOYMENT_DIRECTIONS;
+const {HORIZONTAL, VERTICAL} = DIRECTIONS;
 
 const gameSlice = createSlice({
     name: "game",
@@ -117,6 +118,21 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
     dispatch(gameDeploy(
         playerId,
         deploymentDescription
+    ));
+};
+
+export const gameAutoShot = playerId => (dispatch, getState) => {
+    const state = getState();
+    const nextShotCoords = selectPlayerNextShotCoords(state, playerId);
+
+    const shotDescription = {
+        coords: nextShotCoords.length === 1 ?
+            nextShotCoords[0] : nextShotCoords[getRandomInteger(0, nextShotCoords.length - 1)],
+    };
+
+    dispatch(gameShoot(
+        playerId,
+        shotDescription
     ));
 };
 
