@@ -77,19 +77,23 @@ export const {
 export const gameAutoDeploy = playerId => (dispatch, getState) => {
     const state = getState();
     const undeployedShips = selectPlayerUndeployedShips(state, playerId);
-    const shipDescriptionToDeploy = undeployedShips.length === 1 ?
+
+    if (!undeployedShips.length) return;
+
+    const shipEntityToDeploy = undeployedShips.length === 1 ?
         undeployedShips[0] :
         undeployedShips[getRandomInteger(0, undeployedShips.length - 1)];
+
     const deploymentDescription = {
-        length: shipDescriptionToDeploy.length,
+        shipId: shipEntityToDeploy.id,
         direction: [HORIZONTAL, VERTICAL][getRandomInteger(0, 1)],
     };
 
     let availableDeploymentAnchors = selectPlayerAvailableDeploymentAnchors(
         state,
         playerId,
-        deploymentDescription.direction,
-        deploymentDescription.length
+        deploymentDescription.shipId,
+        deploymentDescription.direction
     );
 
     // switch deployment direction in case when there are no available spots to deploy with previous direction
@@ -101,8 +105,8 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
         availableDeploymentAnchors = selectPlayerAvailableDeploymentAnchors(
             state,
             playerId,
-            deploymentDescription.direction,
-            deploymentDescription.length
+            deploymentDescription.shipId,
+            deploymentDescription.direction
         );
     }
 
@@ -111,7 +115,7 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
         availableDeploymentAnchors[getRandomInteger(0, availableDeploymentAnchors.length - 1)];
 
     dispatch(gameDeploy(
-        playerID,
+        playerId,
         deploymentDescription
     ));
 };

@@ -3,18 +3,19 @@ import {GameError} from "../../custom-errors";
 
 const {DEFAULT_MESSAGES: DEFAULT_ERROR_MESSAGES} = GameError;
 
-function validateGameDeploy(action, deploymentMap) {
+function validateGameDeploy(action, deploymentMap, settingsShips) {
     const {
         anchorCoords: {
             x: anchorXCoord,
             y: anchorYCoord,
         },
         direction: deploymentDirection,
-        length: shipLength,
+        shipId,
     } = action.payload.deploymentDescription;
 
-    const lastXCoord = deploymentMap[0].length - 1;
-    const lastYCoord = deploymentMap.length - 1;
+    const shipLength = settingsShips[shipId].length
+
+    const {lastXCoord, lastYCoord} = deploymentMap;
 
     const isDeploymentHorizontal = deploymentDirection === DEPLOYMENT_DIRECTIONS.HORIZONTAL;
     const isDeploymentVertical = deploymentDirection === DEPLOYMENT_DIRECTIONS.VERTICAL;
@@ -49,29 +50,30 @@ function validateGameDeploy(action, deploymentMap) {
         }
     }
 
-    // check for available deployment space
-    /* CLARIFICATION: AVAILABLE DEPLOYMENT SPACE
-        between each ship, there must be at least one empty cell in any (horizontal, vertical, or diagonal) direction
-    */
+    // check for undeployable cells
     {
-        // coordinates range to check for occupied cells
-        const fromX = anchorXCoord === 0 ? anchorXCoord : anchorXCoord - 1;
-        const toX = isDeploymentHorizontal ?
-            (anchorXCoord + shipLength > lastXCoord ? anchorXCoord + shipLength - 1 : anchorXCoord + shipLength) :
-            (anchorXCoord === lastXCoord ? anchorXCoord : anchorXCoord + 1);
+        switch (deploymentDirection) {
+            case (DEPLOYMENT_DIRECTIONS.HORIZONTAL): {
+                for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + shipLength - 1; xCoord++) {
+                    if (deploymentMap[anchorYCoord][xCoord].isUndeployable) {
+                        errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_BLOCKED;
 
-        const fromY = anchorYCoord === 0 ? anchorYCoord : anchorYCoord - 1;
-        const toY = isDeploymentVertical ?
-            (anchorYCoord + shipLength > lastYCoord ? anchorYCoord + shipLength - 1 : anchorYCoord + shipLength) :
-            (anchorYCoord === lastYCoord? anchorYCoord : anchorYCoord + 1);
-
-        for (let y = fromY; y <= toY; y++) {
-            for (let x = fromX; x <= toX; x++) {
-                if (deploymentMap[y][x].isOccupied) {
-                    errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_BLOCKED;
-
-                    throw new GameError(errorMessage, errorCause);
+                        throw new GameError(errorMessage, errorCause);
+                    }
                 }
+
+                break;
+            }
+            case (DEPLOYMENT_DIRECTIONS.VERTICAL): {
+                for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + shipLength - 1; yCoord++) {
+                    if (deploymentMap[yCoord][anchorXCoord].isUndeployable) {
+                        errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_BLOCKED;
+
+                        throw new GameError(errorMessage, errorCause);
+                    }
+                }
+
+                break;
             }
         }
     }

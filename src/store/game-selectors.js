@@ -4,6 +4,10 @@ import {DEPLOYMENT_DIRECTIONS} from "../constants";
 
 const {HORIZONTAL, VERTICAL} = DEPLOYMENT_DIRECTIONS;
 
+export const selectErrors = state => (
+    state.game?.errors
+);
+
 export const selectSettingsGridDescription = state => (
     state.game?.settings?.gridDescription
 );
@@ -20,20 +24,24 @@ export const selectPlayersIds = state => (
     state.game?.players?.ids
 );
 
-export const selectPlayer = (state, playerId) => (
+export const selectPlayers = state => (
+    state.game?.players?.entities
+);
+
+export const selectPlayerEntity = (state, playerId) => (
     state.game?.players?.entities?.[playerId]
 );
 
 export const selectPlayerDeploymentHistory = (state, playerId) => (
-    selectPlayer(state, playerId)?.deploymentHistory
+    selectPlayerEntity(state, playerId)?.deploymentHistory
 );
 
 export const selectPlayerShotsHistory = (state, playerId) => (
-    selectPlayer(state, playerId)?.shotsHistory
+    selectPlayerEntity(state, playerId)?.shotsHistory
 );
 
 export const selectPlayerOpponentId = (state, playerId) => (
-    selectPlayer(state, playerId)?.opponentId
+    selectPlayerEntity(state, playerId)?.opponentId
 );
 
 export const selectPlayerOpponentShotsHistory = (state, playerId) => {
@@ -237,6 +245,9 @@ class GridMap extends Array {
             }
 
             // cells which are become undeployable
+            /* CLARIFICATION: UNDEPLOYABLE SPACE
+                between each ship must be at least one empty cell in any (horizontal, vertical, or diagonal) direction
+            */
             const {lastXCoord, lastYCoord} = this;
 
             const fromXCoord = anchorXCoord === 0 ? anchorXCoord : anchorXCoord - 1;
