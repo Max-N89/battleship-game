@@ -3,10 +3,11 @@ import {createSlice, nanoid} from "@reduxjs/toolkit";
 import {
     selectPlayerUndeployedShips,
     selectPlayerAvailableDeploymentAnchors,
-    selectPlayerNextShotCoords,
+    selectPlayerNextShotsCoords,
 } from "../game-selectors";
 
 import {DIRECTIONS} from "../../constants";
+import {GameError} from "../../custom-errors";
 
 const {HORIZONTAL, VERTICAL} = DIRECTIONS;
 
@@ -100,8 +101,7 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
     // switch deployment direction in case when there are no available spots to deploy with previous direction
     if (!availableDeploymentAnchors.length) {
         deploymentDescription.direction = deploymentDescription.direction === HORIZONTAL ?
-            VERTICAL :
-            HORIZONTAL;
+            VERTICAL : HORIZONTAL;
 
         availableDeploymentAnchors = selectPlayerAvailableDeploymentAnchors(
             state,
@@ -109,6 +109,15 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
             deploymentDescription.shipId,
             deploymentDescription.direction
         );
+    }
+
+    if (!availableDeploymentAnchors.length) {
+        const errorMessage = "Unable to perform ship auto-deployment in any direction, checkout game settings for validity.";
+        const errorCause = {
+            shipId: deploymentDescription.shipId
+        };
+
+        throw new GameError(errorMessage, errorCause);
     }
 
     deploymentDescription.anchorCoords = availableDeploymentAnchors.length === 1 ?
@@ -123,7 +132,9 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
 
 export const gameAutoShot = playerId => (dispatch, getState) => {
     const state = getState();
-    const nextShotCoords = selectPlayerNextShotCoords(state, playerId);
+    const nextShotCoords = selectPlayerNextShotsCoords(state, playerId);
+
+    if (!nextShotCoords.length) return;
 
     const shotDescription = {
         coords: nextShotCoords.length === 1 ?
