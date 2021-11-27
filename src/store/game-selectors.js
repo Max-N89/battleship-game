@@ -181,7 +181,7 @@ export const selectPlayerAvailableDeploymentAnchors = createSelector(
     (deploymentMap, shipLength, deploymentDirection) => {
         if (!deploymentMap || !shipLength || !deploymentDirection) return;
 
-        return deploymentMap.getContinuousAreas({isUndeployable: false}, deploymentDirection)
+        return deploymentMap.getContinuousCellsSequence({isUndeployable: false}, deploymentDirection)
             .filter(area => area.length >= shipLength)
             .map(area => area.slice(0, area.length - (shipLength - 1)))
             .flat();
@@ -211,24 +211,24 @@ export const selectPlayerNextShotsCoords = createSelector(
             }
         }
 
-        let maxShipLength;
+        let maxNotSunkShipLength;
 
         // check for next shots coords at possibly unfinished shots sequences and count sunken ships with length more than 1
         {
             const successfulShotsSequences = [
-                ...shotsMap.getContinuousAreas({isShotSuccessful: true}, HORIZONTAL),
-                ...shotsMap.getContinuousAreas({isShotSuccessful: true}, VERTICAL),
+                ...shotsMap.getContinuousCellsSequence({isShotSuccessful: true}, HORIZONTAL),
+                ...shotsMap.getContinuousCellsSequence({isShotSuccessful: true}, VERTICAL),
             ]
                 .sort((a, b) => b.length - a.length)
                 .filter(area => area.length > 1);
 
-            successfulShotsSequences.forEach(shotsSequence => {
-                maxShipLength = getMaxShipLength(shipsAmountsByLength);
+            if (successfulShotsSequences.length) successfulShotsSequences.forEach(shotsSequence => {
+                maxNotSunkShipLength = getMaxNotSunkShipLength(shipsAmountsByLength);
 
                 const nextShotsSequenceCoords = [];
 
-                if (shotsSequence.length === maxShipLength) {
-                    shipsAmountsByLength.get(maxShipLength).sunken++;
+                if (shotsSequence.length === maxNotSunkShipLength) {
+                    shipsAmountsByLength.get(shotsSequence.length).sunken++;
                     return;
                 }
 
@@ -281,17 +281,17 @@ export const selectPlayerNextShotsCoords = createSelector(
             if (nextShotsCoords.length) return nextShotsCoords;
         }
 
-        // check for next shots coords at successful single shots and count sunken ships with length equal to 1
+        // check for next shots coords at successful single shots and count sunken ships with length equal to one
         {
-            maxShipLength = getMaxShipLength(shipsAmountsByLength);
+            maxNotSunkShipLength = getMaxNotSunkShipLength(shipsAmountsByLength);
 
             const successfulSingleShotsCoords = getSuccessfulSingleShotsCoords(shotsMap);
 
-            if (maxShipLength > 1 && successfulSingleShotsCoords.length) {
+            if (maxNotSunkShipLength > 1 && successfulSingleShotsCoords.length) {
                 successfulSingleShotsCoords.forEach(singleShotCoords => {
                     const allAdjacentShotsCoords = [];
 
-                    const minShipLength = getMinShipLength(shipsAmountsByLength)
+                    const minNotSunkShipLength = getMinNotSunkShipLength(shipsAmountsByLength)
 
                     const {
                         x: xCoord,
@@ -302,10 +302,10 @@ export const selectPlayerNextShotsCoords = createSelector(
                     {
                         let isUpDirectionPossible = true;
 
-                        if (yCoord - (minShipLength - 1) < 0) {
+                        if (yCoord - (minNotSunkShipLength - 1) < 0) {
                             isUpDirectionPossible = false;
                         } else {
-                            for (let checkYCoord = yCoord; checkYCoord > yCoord - (minShipLength - 1); checkYCoord--) {
+                            for (let checkYCoord = yCoord; checkYCoord > yCoord - (minNotSunkShipLength - 1); checkYCoord--) {
                                 if (!getAdjacentShotCoords(UP, {x: xCoord, y: checkYCoord}, shotsMap)) {
                                     isUpDirectionPossible = false;
                                     break;
@@ -317,10 +317,10 @@ export const selectPlayerNextShotsCoords = createSelector(
 
                         let isDownDirectionPossible = true;
 
-                        if (yCoord + (minShipLength - 1) > lastYCoord) {
+                        if (yCoord + (minNotSunkShipLength - 1) > lastYCoord) {
                             isDownDirectionPossible = false;
                         } else {
-                            for (let checkYCoord = yCoord; checkYCoord < yCoord + (minShipLength - 1); checkYCoord++) {
+                            for (let checkYCoord = yCoord; checkYCoord < yCoord + (minNotSunkShipLength - 1); checkYCoord++) {
                                 if (!getAdjacentShotCoords(DOWN, {x: xCoord, y: checkYCoord}, shotsMap)) {
                                     isDownDirectionPossible = false;
                                     break;
@@ -332,10 +332,10 @@ export const selectPlayerNextShotsCoords = createSelector(
 
                         let isLeftDirectionPossible = true;
 
-                        if (xCoord - (minShipLength - 1) < 0) {
+                        if (xCoord - (minNotSunkShipLength - 1) < 0) {
                             isLeftDirectionPossible = false;
                         } else {
-                            for (let checkXCoord = xCoord; checkXCoord > xCoord - (minShipLength - 1); checkXCoord--) {
+                            for (let checkXCoord = xCoord; checkXCoord > xCoord - (minNotSunkShipLength - 1); checkXCoord--) {
                                 if (!getAdjacentShotCoords(LEFT, {x: checkXCoord, y: yCoord}, shotsMap)) {
                                     isLeftDirectionPossible = false;
                                     break;
@@ -347,10 +347,10 @@ export const selectPlayerNextShotsCoords = createSelector(
 
                         let isRightDirectionPossible = true;
 
-                        if (xCoord + (minShipLength - 1) > lastXCoord) {
+                        if (xCoord + (minNotSunkShipLength - 1) > lastXCoord) {
                             isRightDirectionPossible = false;
                         } else {
-                            for (let checkXCoord = xCoord; checkXCoord < xCoord + (minShipLength - 1); checkXCoord++) {
+                            for (let checkXCoord = xCoord; checkXCoord < xCoord + (minNotSunkShipLength - 1); checkXCoord++) {
                                 if (!getAdjacentShotCoords(RIGHT, {x: checkXCoord, y: yCoord}, shotsMap)) {
                                     isRightDirectionPossible = false;
                                     break;
@@ -374,31 +374,33 @@ export const selectPlayerNextShotsCoords = createSelector(
 
         // get "search" shots coords
         {
-            maxShipLength = getMaxShipLength(shipsAmountsByLength);
+            maxNotSunkShipLength = getMaxNotSunkShipLength(shipsAmountsByLength);
 
-            return getSearchShotsCoords(maxShipLength, shotsMap);
+            return getSearchShotsCoords(maxNotSunkShipLength, shotsMap);
         }
 
-        function getMaxShipLength(shipsAmountsByLength) {
-            const shipsLengths = Array.from(shipsAmountsByLength.keys())
+        // *** SUPPLEMENTS ***
+
+        function getMaxNotSunkShipLength(shipsAmountsByLength) {
+            const notSunkShipsLengths = Array.from(shipsAmountsByLength.keys())
                 .filter(shipLength => {
                     const shipAmounts = shipsAmountsByLength.get(shipLength);
 
                     return shipAmounts.total > shipAmounts.sunken;
                 });
 
-            return Math.max(...shipsLengths);
+            return notSunkShipsLengths.length ? Math.max(...notSunkShipsLengths) : undefined;
         }
 
-        function getMinShipLength(shipsAmountsByLength) {
-            const shipsLengths = Array.from(shipsAmountsByLength.keys())
+        function getMinNotSunkShipLength(shipsAmountsByLength) {
+            const notSunkShipsLengths = Array.from(shipsAmountsByLength.keys())
                 .filter(shipLength => {
                     const shipAmounts = shipsAmountsByLength.get(shipLength);
 
                     return shipAmounts.total > shipAmounts.sunken && shipLength > 1;
                 });
 
-            return Math.min(...shipsLengths);
+            return notSunkShipsLengths.length ? Math.min(...notSunkShipsLengths) : undefined;
         }
 
         function getAdjacentShotCoords(direction, adjacentToShotCoords, shotsMap) {
@@ -795,18 +797,18 @@ class GridMap extends Array {
         return this.length - 1;
     }
 
-    getContinuousAreas(cellProps, direction) {
-        const continuousAreas = [];
+    getContinuousCellsSequence(cellProps, direction) {
+        const allContinuousSequences = [];
 
         const {lastYCoord, lastXCoord} = this;
 
         /*
-            to pick continuous areas depending on direction;
+            to pick continuous sequence depending on direction;
             iterate first over Y coordinates for horizontal direction
             or over X coordinates for vertical direction respectively
         */
 
-        let continuousArea = [];
+        let continuousSequence = [];
         let firstLoopLastCoord, secondLoopLastCoord;
 
         switch (direction) {
@@ -844,24 +846,24 @@ class GridMap extends Array {
                     !Object.entries(cellProps)
                         .every(([key, value]) => this[yCoord][xCoord][key] === value)
                 ) {
-                    if (continuousArea.length) {
-                        continuousAreas.push(continuousArea);
-                        continuousArea = [];
+                    if (continuousSequence.length) {
+                        allContinuousSequences.push(continuousSequence);
+                        continuousSequence = [];
                     }
 
                     continue;
                 }
 
-                continuousArea.push({x: xCoord, y: yCoord});
+                continuousSequence.push({x: xCoord, y: yCoord});
             }
 
-            if (continuousArea.length) {
-                continuousAreas.push(continuousArea);
+            if (continuousSequence.length) {
+                allContinuousSequences.push(continuousSequence);
             }
 
-            continuousArea = [];
+            continuousSequence = [];
         }
 
-        return continuousAreas;
+        return allContinuousSequences;
     }
 }
