@@ -157,8 +157,8 @@ export const gameAutoMove = () => (dispatch, getState) => {
     const [playerOneId, playerTwoId] = selectPlayersIds(state);
     const scoreToWin = selectScoreToWin(state);
 
-    const playerOneScore = selectPlayerScore(playerOneId);
-    const playerTwoScore = selectPlayerScore(playerTwoId);
+    const playerOneScore = selectPlayerScore(state, playerOneId);
+    const playerTwoScore = selectPlayerScore(state, playerTwoId);
 
     if (playerOneScore === scoreToWin || playerTwoScore === scoreToWin) {
         dispatch(gameReset());

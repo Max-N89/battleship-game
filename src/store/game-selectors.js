@@ -444,7 +444,7 @@ export const selectPlayerNextShotsCoords = createSelector(
 
             for (let yCoord = 0; yCoord <= lastYCoord; yCoord++) {
                 for (let xCoord = 0; xCoord <= lastXCoord; xCoord++) {
-                    if (!shotsMap[yCoord][xCoord].isShotSuccessful) break;
+                    if (!shotsMap[yCoord][xCoord].isShotSuccessful) continue;
 
                     const topAdjacentCell = yCoord > 0 ? shotsMap[yCoord - 1][xCoord] : undefined;
                     const bottomAdjacentCell = yCoord < lastYCoord ? shotsMap[yCoord + 1][xCoord] : undefined;
