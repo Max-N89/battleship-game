@@ -4,6 +4,10 @@ import {
     selectPlayerUndeployedShips,
     selectPlayerAvailableDeploymentAnchors,
     selectPlayerNextShotsCoords,
+    selectPlayersIds,
+    selectScoreToWin,
+    selectPlayerScore,
+    selectPlayerShotsHistory,
 } from "../game-selectors";
 
 import {DIRECTIONS} from "../../constants";
@@ -146,6 +150,44 @@ export const gameAutoShot = playerId => (dispatch, getState) => {
         shotDescription
     ));
 };
+
+export const gameAutoMove = () => (dispatch, getState) => {
+    const state = getState();
+
+    const [playerOneId, playerTwoId] = selectPlayersIds(state);
+    const scoreToWin = selectScoreToWin(state);
+
+    const playerOneScore = selectPlayerScore(playerOneId);
+    const playerTwoScore = selectPlayerScore(playerTwoId);
+
+    if (playerOneScore === scoreToWin || playerTwoScore === scoreToWin) {
+        dispatch(gameReset());
+
+        return;
+    }
+
+    const playerOneUndeployedShipsIds = selectPlayerUndeployedShips(state, playerOneId);
+    const playerTwoUndeployedShipsIds = selectPlayerUndeployedShips(state, playerTwoId);
+
+    if (playerOneUndeployedShipsIds.length || playerTwoUndeployedShipsIds.length) {
+        if (playerOneUndeployedShipsIds.length === playerTwoUndeployedShipsIds.length) {
+            dispatch(gameAutoDeploy(playerOneId));
+        } else {
+            dispatch(gameAutoDeploy(playerTwoId))
+        }
+
+        return;
+    }
+
+    const playerOneShotsHistory = selectPlayerShotsHistory(state, playerOneId);
+    const playerTwoShotsHistory = selectPlayerShotsHistory(state, playerTwoId);
+
+    if (playerOneShotsHistory.length === playerTwoShotsHistory.length) {
+        dispatch(gameAutoShot(playerOneId));
+    } else {
+        dispatch(gameAutoShot(playerTwoId));
+    }
+}
 
 export default gameSlice.reducer;
 
