@@ -196,6 +196,7 @@ export const selectPlayerNextShotsCoords = createSelector(
     (shotsMap, settingsShips) => {
         if (!shotsMap || !settingsShips) return;
 
+        const {lastXCoord, lastYCoord} = shotsMap;
         const nextShotsCoords = [];
         const shipsAmountsByLength = new Map();
 
@@ -222,7 +223,7 @@ export const selectPlayerNextShotsCoords = createSelector(
                 .filter(area => area.length > 1);
 
             successfulShotsSequences.forEach(shotsSequence => {
-                maxShipLength = getPossibleMaxShipLength(shipsAmountsByLength);
+                maxShipLength = getMaxShipLength(shipsAmountsByLength);
 
                 const nextShotsSequenceCoords = [];
 
@@ -282,7 +283,7 @@ export const selectPlayerNextShotsCoords = createSelector(
 
         // check for next shots coords at successful single shots and count sunken ships with length equal to 1
         {
-            maxShipLength = getPossibleMaxShipLength(shipsAmountsByLength);
+            maxShipLength = getMaxShipLength(shipsAmountsByLength);
 
             const successfulSingleShotsCoords = getSuccessfulSingleShotsCoords(shotsMap);
 
@@ -290,11 +291,75 @@ export const selectPlayerNextShotsCoords = createSelector(
                 successfulSingleShotsCoords.forEach(singleShotCoords => {
                     const allAdjacentShotsCoords = [];
 
-                    [UP, DOWN, LEFT, RIGHT].forEach(direction => {
-                        const adjacentShotCoords = getAdjacentShotCoords(direction, singleShotCoords, shotsMap);
+                    const minShipLength = getMinShipLength(shipsAmountsByLength)
 
-                        if (adjacentShotCoords) allAdjacentShotsCoords.push(adjacentShotCoords);
-                    });
+                    const {
+                        x: xCoord,
+                        y: yCoord
+                    } = singleShotCoords;
+
+                    // check directions for possibly minimal ship longer than one
+                    {
+                        let isUpDirectionPossible = true;
+
+                        if (yCoord - (minShipLength - 1) < 0) {
+                            isUpDirectionPossible = false;
+                        } else {
+                            for (let checkYCoord = yCoord; checkYCoord > yCoord - (minShipLength - 1); checkYCoord--) {
+                                if (!getAdjacentShotCoords(UP, {x: xCoord, y: checkYCoord}, shotsMap)) {
+                                    isUpDirectionPossible = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (isUpDirectionPossible) allAdjacentShotsCoords.push(getAdjacentShotCoords(UP, singleShotCoords, shotsMap));
+
+                        let isDownDirectionPossible = true;
+
+                        if (yCoord + (minShipLength - 1) > lastYCoord) {
+                            isDownDirectionPossible = false;
+                        } else {
+                            for (let checkYCoord = yCoord; checkYCoord < yCoord + (minShipLength - 1); checkYCoord++) {
+                                if (!getAdjacentShotCoords(DOWN, {x: xCoord, y: checkYCoord}, shotsMap)) {
+                                    isDownDirectionPossible = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (isDownDirectionPossible) allAdjacentShotsCoords.push(getAdjacentShotCoords(DOWN, singleShotCoords, shotsMap));
+
+                        let isLeftDirectionPossible = true;
+
+                        if (xCoord - (minShipLength - 1) < 0) {
+                            isLeftDirectionPossible = false;
+                        } else {
+                            for (let checkXCoord = xCoord; checkXCoord > xCoord - (minShipLength - 1); checkXCoord--) {
+                                if (!getAdjacentShotCoords(LEFT, {x: checkXCoord, y: yCoord}, shotsMap)) {
+                                    isLeftDirectionPossible = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (isLeftDirectionPossible) allAdjacentShotsCoords.push(getAdjacentShotCoords(LEFT, singleShotCoords, shotsMap));
+
+                        let isRightDirectionPossible = true;
+
+                        if (xCoord + (minShipLength - 1) > lastXCoord) {
+                            isRightDirectionPossible = false;
+                        } else {
+                            for (let checkXCoord = xCoord; checkXCoord < xCoord + (minShipLength - 1); checkXCoord++) {
+                                if (!getAdjacentShotCoords(RIGHT, {x: checkXCoord, y: yCoord}, shotsMap)) {
+                                    isRightDirectionPossible = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (isRightDirectionPossible) allAdjacentShotsCoords.push(getAdjacentShotCoords(RIGHT, singleShotCoords, shotsMap));
+                    }
 
                     if (allAdjacentShotsCoords.length) {
                         nextShotsCoords.push(...allAdjacentShotsCoords);
@@ -309,12 +374,12 @@ export const selectPlayerNextShotsCoords = createSelector(
 
         // get "search" shots coords
         {
-            maxShipLength = getPossibleMaxShipLength(shipsAmountsByLength);
+            maxShipLength = getMaxShipLength(shipsAmountsByLength);
 
             return getSearchShotsCoords(maxShipLength, shotsMap);
         }
 
-        function getPossibleMaxShipLength(shipsAmountsByLength) {
+        function getMaxShipLength(shipsAmountsByLength) {
             const shipsLengths = Array.from(shipsAmountsByLength.keys())
                 .filter(shipLength => {
                     const shipAmounts = shipsAmountsByLength.get(shipLength);
@@ -323,6 +388,17 @@ export const selectPlayerNextShotsCoords = createSelector(
                 });
 
             return Math.max(...shipsLengths);
+        }
+
+        function getMinShipLength(shipsAmountsByLength) {
+            const shipsLengths = Array.from(shipsAmountsByLength.keys())
+                .filter(shipLength => {
+                    const shipAmounts = shipsAmountsByLength.get(shipLength);
+
+                    return shipAmounts.total > shipAmounts.sunken && shipLength > 1;
+                });
+
+            return Math.min(...shipsLengths);
         }
 
         function getAdjacentShotCoords(direction, adjacentToShotCoords, shotsMap) {
