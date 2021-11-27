@@ -8,6 +8,8 @@ import {
     selectScoreToWin,
     selectPlayerScore,
     selectPlayerShotsHistory,
+    selectPlayerDeploymentMap,
+    selectPlayerShotsMap,
 } from "../game-selectors";
 
 import {DIRECTIONS} from "../../constants";
@@ -116,9 +118,11 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
     }
 
     if (!availableDeploymentAnchors.length) {
-        const errorMessage = "Unable to perform ship auto-deployment in any direction, checkout game settings for validity.";
+        const errorMessage = "Unable to perform ship auto-deployment in any direction.";
         const errorCause = {
-            shipId: deploymentDescription.shipId
+            playerId,
+            deploymentMap: selectPlayerDeploymentMap(state, playerId),
+            shipId: deploymentDescription.shipId,
         };
 
         throw new GameError(errorMessage, errorCause);
@@ -138,7 +142,15 @@ export const gameAutoShot = playerId => (dispatch, getState) => {
     const state = getState();
     const nextShotCoords = selectPlayerNextShotsCoords(state, playerId);
 
-    if (!nextShotCoords.length) return;
+    if (!nextShotCoords.length) {
+        const errorMessage = "Unable to perform auto-shot.";
+        const errorCause = {
+            playerId,
+            shotsMap: selectPlayerShotsMap(state, playerId),
+        };
+
+        throw new GameError(errorMessage, errorCause);
+    }
 
     const shotDescription = {
         coords: nextShotCoords.length === 1 ?
