@@ -59,6 +59,8 @@ export const selectPlayerUndeployedShips = createSelector(
         selectSettingsShips
     ],
     (deploymentHistory, settingsShips) => {
+        if (!deploymentHistory || !settingsShips) return;
+
         const deployedShipsIds = new Set(deploymentHistory.map(({shipId}) => shipId));
 
         return Object.values(settingsShips).filter(({id}) => !deployedShipsIds.has(id));
@@ -143,11 +145,11 @@ export const selectPlayerDeploymentMap = createSelector(
 export const selectPlayerShotsMap = createSelector(
     [
         (state, playerId) => selectPlayerShotsHistory(state, playerId),
-        (state, playerId) => selectPlayerDeploymentMap(state, selectPlayerOpponentId(playerId)),
+        (state, playerId) => selectPlayerDeploymentMap(state, selectPlayerOpponentId(state, playerId)),
         selectSettingsGridDescription,
     ],
     (playerShotsHistory, opponentDeploymentMap, gridDescription) => {
-        if (!playerShotsHistory || !gridDescription) return;
+        if (!playerShotsHistory || !opponentDeploymentMap || !gridDescription) return;
 
         const playerShotsMap = new GridMap(gridDescription.width, gridDescription.height, {isShooted: false});
 
@@ -584,6 +586,96 @@ export const selectPlayerNextShotsCoords = createSelector(
 
             return allSearchShotsDescriptions.map(({coords: {x, y}}) => ({x, y}))
         }
+    }
+);
+
+export const selectScoreToWin = state => {
+    const settingsShips = selectSettingsShips(state);
+
+    if (!settingsShips) return;
+
+    let scoreToWin = 0;
+
+    for (let {length} of Object.values(settingsShips)) {
+        scoreToWin += length;
+    }
+
+    return scoreToWin;
+};
+
+export const selectPlayerScore = (state, playerId) => {
+    const shotsMap = selectPlayerShotsMap(state, playerId);
+
+    if (!shotsMap) return;
+
+    const {lastXCoord, lastYCoord} = shotsMap;
+
+    let score = 0;
+
+    for (let yCoord = 0; yCoord <= lastYCoord; yCoord++) {
+        for (let xCoord = 0; xCoord <= lastXCoord; xCoord++) {
+            if (shotsMap[yCoord][xCoord].isShotSuccessful) score++;
+        }
+    }
+
+    return score;
+};
+
+export const selectPlayerGameMap = createSelector(
+    [
+        (state, playerId) => selectPlayerDeploymentHistory(state, playerId),
+        (state, playerId) => selectPlayerShotsHistory(state, selectPlayerOpponentId(state, playerId)),
+        selectSettingsShips,
+        selectSettingsGridDescription,
+    ],
+    (playerDeploymentHistory, opponentShotsHistory, settingsShips, gridDescription) => {
+        if (!playerDeploymentHistory || !opponentShotsHistory || !settingsShips || !gridDescription) return;
+
+        const playerGameMap = new GridMap(gridDescription.width, gridDescription.height, {isOccupied: false, isShooted: false});
+
+        playerDeploymentHistory.forEach(deploymentDescription => {
+            const {
+                anchorCoords: {
+                    x: anchorXCoord,
+                    y: anchorYCoord,
+                },
+                direction: deploymentDirection,
+                shipId,
+            } = deploymentDescription;
+
+            const shipLength = settingsShips[shipId].length;
+
+            // cells which become occupied
+            switch (deploymentDirection) {
+                case HORIZONTAL: {
+                    for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + (shipLength - 1); xCoord++) {
+                        playerGameMap[anchorYCoord][xCoord].isOccupied = true;
+                    }
+
+                    break;
+                }
+                case VERTICAL: {
+                    for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + (shipLength - 1); yCoord++) {
+                        playerGameMap[yCoord][anchorXCoord].isOccupied = true;
+                    }
+
+                    break;
+                }
+            }
+        });
+
+        opponentShotsHistory.forEach(shotDescription => {
+            const {
+                coords: {
+                    x: shotXCoord,
+                    y: shotYCoord,
+                },
+            } = shotDescription;
+
+            playerGameMap[shotYCoord][shotXCoord].isShooted = true;
+        });
+
+        return playerGameMap;
     }
 );
 
