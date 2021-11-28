@@ -122,10 +122,12 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
         const errorCause = {
             playerId,
             deploymentMap: selectPlayerDeploymentMap(state, playerId),
-            shipId: deploymentDescription.shipId,
+            ship: shipEntityToDeploy,
         };
 
-        throw new GameError(errorMessage, errorCause);
+        dispatch(gameError(new GameError(errorMessage, errorCause)));
+
+        return;
     }
 
     deploymentDescription.anchorCoords = availableDeploymentAnchors.length === 1 ?
@@ -149,7 +151,9 @@ export const gameAutoShot = playerId => (dispatch, getState) => {
             shotsMap: selectPlayerShotsMap(state, playerId),
         };
 
-        throw new GameError(errorMessage, errorCause);
+        dispatch(gameError(new GameError(errorMessage, errorCause)));
+
+        return;
     }
 
     const shotDescription = {
