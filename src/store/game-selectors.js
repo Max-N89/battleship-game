@@ -928,3 +928,73 @@ class GridMap extends Array {
         });
     }
 }
+
+class DeploymentMap extends GridMap {
+    constructor(width, height, deploymentsDescriptions) {
+        super(width, height, {isOccupied: false, isUndeployable: false});
+
+        this.constructor.addDeployments(this, deploymentsDescriptions);
+
+        deploymentsDescriptions.forEach(description => {
+            const {
+                anchorCoords: {
+                    x: anchorXCoord,
+                    y: anchorYCoord,
+                },
+                angle: deploymentAngle,
+                length: shipLength,
+            } = description;
+
+            // cells which become undeployable
+            /* CLARIFICATION: UNDEPLOYABLE SPACE
+                between each ship must be at least one empty cell in any (horizontal, vertical, or diagonal) direction
+            */
+            const {lastXCoord, lastYCoord} = this;
+
+            const xAxisOffset = (shipLength - 1) * Math.round(Math.sin(deploymentAngle));
+            const yAxisOffset = (shipLength - 1) * Math.round(Math.cos(deploymentAngle));
+
+            const fromXCoord = anchorXCoord === 0 ? 0 : anchorXCoord - 1;
+            const toXCoord = anchorXCoord + xAxisOffset + 1 > lastXCoord ? lastXCoord : anchorXCoord + xAxisOffset + 1;
+
+            const fromYCoord = anchorYCoord === 0 ? 0 : anchorYCoord - 1;
+            const toYCoord = anchorYCoord + yAxisOffset + 1 > lastYCoord ? lastYCoord : anchorYCoord + yAxisOffset + 1;
+
+            for (let yCoord = fromYCoord; yCoord <= toYCoord; yCoord++) {
+                for (let xCoord = fromXCoord; xCoord <= toXCoord; xCoord++) {
+                    if (deploymentMap[yCoord][xCoord].isUndeployable) continue;
+
+                    deploymentMap[yCoord][xCoord].isUndeployable = true;
+                }
+            }
+        });
+    }
+}
+
+class ShotsMap extends GridMap {
+    constructor(width, height, playerShotsDescriptions, opponentDeploymentMap) {
+        super(width, height, {isShooted: false});
+
+        this.constructor.addShots(this, playerShotsDescriptions);
+
+        playerShotsDescriptions.forEach(description => {
+            const {
+                coords: {
+                    x: shotXCoord,
+                    y: shotYCoord,
+                },
+            } = description;
+
+            if (opponentDeploymentMap[shotYCoord][shotXCoord].isOccupied) this[shotYCoord][shotXCoord].isShotSuccessful = true;
+        });
+    }
+}
+
+class GameMap extends GridMap {
+    constructor(width, height, playerDeploymentsDescriptions, opponentShotsDescriptions) {
+        super(width, height, {isOccupied: false, isShooted: false});
+
+        this.constructor.addDeployments(this, playerDeploymentsDescriptions);
+        this.constructor.addShots(this, opponentShotsDescriptions);
+    }
+}
