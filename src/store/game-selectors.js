@@ -803,9 +803,10 @@ class GridMap extends Array {
         const {lastYCoord, lastXCoord} = this;
 
         /*
-            to pick continuous sequence depending on direction;
-            iterate first over Y coordinates for horizontal direction
-            or over X coordinates for vertical direction respectively
+            picking continuous cells sequences that lie in map rows (horizontal direction)
+            or in columns (vertical direction);
+            iterate first over Y coordinates for checking rows
+            or over X coordinates for checking columns respectively
         */
 
         let continuousSequence = [];
