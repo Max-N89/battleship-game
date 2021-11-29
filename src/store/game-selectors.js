@@ -867,7 +867,7 @@ class GridMap extends Array {
         return allContinuousSequences;
     }
 
-    isMapAreaContains(cellProps, fromCellCoords, toCellCoords) {
+    isMapAreaContaining(cellProps, fromCellCoords, toCellCoords) {
         if (fromCellCoords.x === toCellCoords.x && fromCellCoords.y === toCellCoords.y) return;
 
         const fromXCoord = Math.min(fromCellCoords.x, toCellCoords.x);
@@ -879,7 +879,7 @@ class GridMap extends Array {
 
         if (fromXCoord < 0 || toXCoord > lastXCoord || fromYCoord < 0 || toYCoord > lastYCoord) return;
 
-        let isContains = false;
+        let isContaining = false;
 
         loopOverAreaYCoord: for (let yCoord = fromYCoord; yCoord <= toYCoord; yCoord++) {
             for (let xCoord = fromXCoord; xCoord <= toXCoord; xCoord++) {
@@ -887,13 +887,13 @@ class GridMap extends Array {
                     Object.entries(cellProps)
                         .every(([key, value]) => this[yCoord][xCoord][key] === value)
                 ) {
-                    isContains = true;
+                    isContaining = true;
                     break loopOverAreaYCoord;
                 }
             }
         }
 
-        return isContains;
+        return isContaining;
     }
 
     static addDeployments(gridMap, deploymentsDescriptions) {
@@ -903,12 +903,15 @@ class GridMap extends Array {
                     x: anchorXCoord,
                     y: anchorYCoord,
                 },
-                deploymentAngle,
+                angle: deploymentAngle,
                 length: shipLength,
             } = description;
 
-            for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + (shipLength - 1) * Math.round(Math.cos(deploymentAngle)); yCoord++) {
-                for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + (shipLength - 1) * Math.round(Math.sin(deploymentAngle)); xCoord++) {
+            const xAxisOffset = (shipLength - 1) * Math.round(Math.sin(deploymentAngle));
+            const yAxisOffset = (shipLength - 1) * Math.round(Math.cos(deploymentAngle));
+
+            for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + yAxisOffset; yCoord++) {
+                for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + xAxisOffset; xCoord++) {
                     gridMap[yCoord][xCoord].isOccupied = true;
                 }
             }
