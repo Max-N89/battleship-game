@@ -895,4 +895,36 @@ class GridMap extends Array {
 
         return isContains;
     }
+
+    static addDeployments(gridMap, deploymentsDescriptions) {
+        deploymentsDescriptions.forEach(description => {
+            const {
+                anchorCoords: {
+                    x: anchorXCoord,
+                    y: anchorYCoord,
+                },
+                deploymentAngle,
+                length: shipLength,
+            } = description;
+
+            for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + (shipLength - 1) * Math.round(Math.cos(deploymentAngle)); yCoord++) {
+                for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + (shipLength - 1) * Math.round(Math.sin(deploymentAngle)); xCoord++) {
+                    gridMap[yCoord][xCoord].isOccupied = true;
+                }
+            }
+        });
+    }
+
+    static addShots(gridMap, shotsDescriptions) {
+        shotsDescriptions.forEach(description => {
+            const {
+                coords: {
+                    x: shotXCoord,
+                    y: shotYCoord,
+                },
+            } = description;
+
+            gridMap[shotYCoord][shotXCoord].isShooted = true;
+        });
+    }
 }
