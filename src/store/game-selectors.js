@@ -866,4 +866,33 @@ class GridMap extends Array {
 
         return allContinuousSequences;
     }
+
+    isMapAreaContains(cellProps, fromCellCoords, toCellCoords) {
+        if (fromCellCoords.x === toCellCoords.x && fromCellCoords.y === toCellCoords.y) return;
+
+        const fromXCoord = Math.min(fromCellCoords.x, toCellCoords.x);
+        const toXCoord = Math.max(fromCellCoords.x, toCellCoords.x);
+        const fromYCoord = Math.min(fromCellCoords.y, toCellCoords.y);
+        const toYCoord = Math.max(fromCellCoords.y, toCellCoords.y);
+
+        const {lastXCoord, lastYCoord} = this;
+
+        if (fromXCoord < 0 || toXCoord > lastXCoord || fromYCoord < 0 || toYCoord > lastYCoord) return;
+
+        let isContains = false;
+
+        loopOverAreaYCoord: for (let yCoord = fromYCoord; yCoord <= toYCoord; yCoord++) {
+            for (let xCoord = fromXCoord; xCoord <= toXCoord; xCoord++) {
+                if (
+                    Object.entries(cellProps)
+                        .every(([key, value]) => this[yCoord][xCoord][key] === value)
+                ) {
+                    isContains = true;
+                    break loopOverAreaYCoord;
+                }
+            }
+        }
+
+        return isContains;
+    }
 }
