@@ -76,69 +76,15 @@ export const selectPlayerDeploymentMap = createSelector(
     (deploymentHistory, settingsShips, gridDescription) => {
         if (!deploymentHistory || !settingsShips || !gridDescription) return;
 
-        const deploymentMap = new GridMap(gridDescription.width, gridDescription.height, {isOccupied: false, isUndeployable: false});
+        const deploymentsDescriptions = deploymentHistory.map(({anchorCoords, angle, shipId}) => ({
+            anchorCoords,
+            angle,
+            length: settingsShips[shipId].length,
+        }));
 
-        deploymentHistory.forEach(deploymentDescription => {
-            const {
-                anchorCoords: {
-                    x: anchorXCoord,
-                    y: anchorYCoord,
-                },
-                direction: deploymentDirection,
-                shipId,
-            } = deploymentDescription;
+        const {width: mapWidth, height: mapHeight} = gridDescription;
 
-            const shipLength = settingsShips[shipId].length;
-
-            const isDeploymentHorizontal = deploymentDirection === HORIZONTAL;
-            const isDeploymentVertical = deploymentDirection === VERTICAL;
-
-            // cells which become occupied
-            switch (deploymentDirection) {
-                case HORIZONTAL: {
-                    for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + (shipLength - 1); xCoord++) {
-                        deploymentMap[anchorYCoord][xCoord].isOccupied = true;
-                    }
-
-                    break;
-                }
-                case VERTICAL: {
-                    for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + (shipLength - 1); yCoord++) {
-                        deploymentMap[yCoord][anchorXCoord].isOccupied = true;
-                    }
-
-                    break;
-                }
-            }
-
-            // cells which become undeployable
-            /* CLARIFICATION: UNDEPLOYABLE SPACE
-                between each ship must be at least one empty cell in any (horizontal, vertical, or diagonal) direction
-            */
-            const {lastXCoord, lastYCoord} = deploymentMap;
-
-            const fromXCoord = anchorXCoord === 0 ? 0 : anchorXCoord - 1;
-
-            const toXCoord = isDeploymentHorizontal ?
-                (anchorXCoord + shipLength > lastXCoord ? anchorXCoord + (shipLength - 1) : anchorXCoord + shipLength) :
-                (anchorXCoord === lastXCoord ? lastXCoord : anchorXCoord + 1);
-
-            const fromYCoord = anchorYCoord === 0 ? 0 : anchorYCoord - 1;
-
-            const toYCoord = isDeploymentVertical ?
-                (anchorYCoord + shipLength > lastYCoord ? anchorYCoord + (shipLength - 1) : anchorYCoord + shipLength) :
-                (anchorYCoord === lastYCoord? lastYCoord : anchorYCoord + 1);
-
-            for (let yCoord = fromYCoord; yCoord <= toYCoord; yCoord++) {
-                for (let xCoord = fromXCoord; xCoord <= toXCoord; xCoord++) {
-                    if (deploymentMap[yCoord][xCoord].isUndeployable) continue;
-
-                    deploymentMap[yCoord][xCoord].isUndeployable = true;
-                }
-            }
-        });
-
-        return deploymentMap;
+        return new DeploymentMap(mapWidth, mapHeight, deploymentsDescriptions);
     }
 );
 
@@ -151,24 +97,13 @@ export const selectPlayerShotsMap = createSelector(
     (playerShotsHistory, opponentDeploymentMap, gridDescription) => {
         if (!playerShotsHistory || !opponentDeploymentMap || !gridDescription) return;
 
-        const playerShotsMap = new GridMap(gridDescription.width, gridDescription.height, {isShooted: false});
+        const playerShotsDescriptions = playerShotsHistory.map(({coords}) => ({
+            coords,
+        }));
 
-        playerShotsHistory.forEach(shotDescription => {
-            const {
-                coords: {
-                    x: shotXCoord,
-                    y: shotYCoord,
-                },
-            } = shotDescription;
+        const {width: mapWidth, height: mapHeight} = gridDescription;
 
-            const playerShotsMapCell = playerShotsMap[shotYCoord][shotXCoord];
-
-            playerShotsMapCell.isShooted = true;
-
-            if (opponentDeploymentMap[shotYCoord][shotXCoord].isOccupied) playerShotsMapCell.isShotSuccessful = true;
-        });
-
-        return playerShotsMap;
+        return new ShotsMap(mapWidth, mapHeight, playerShotsDescriptions, opponentDeploymentMap);
     }
 );
 
@@ -215,66 +150,45 @@ export const selectPlayerNextShotsCoords = createSelector(
 
         // check for next shots coords at possibly unfinished shots sequences and count sunken ships with length more than 1
         {
-            const successfulShotsSequences = [
+            const allSuccessfulShotsSequences = [
                 ...shotsMap.getContinuousCellsSequence({isShotSuccessful: true}, HORIZONTAL),
                 ...shotsMap.getContinuousCellsSequence({isShotSuccessful: true}, VERTICAL),
             ]
                 .sort((a, b) => b.length - a.length)
                 .filter(area => area.length > 1);
 
-            if (successfulShotsSequences.length) successfulShotsSequences.forEach(shotsSequence => {
+            if (allSuccessfulShotsSequences.length) allSuccessfulShotsSequences.forEach(successfulShotsSequence => {
                 maxNotSunkShipLength = getMaxNotSunkShipLength(shipsAmountsByLength);
 
-                const nextShotsSequenceCoords = [];
+                const nextShotsInSequenceCoords = [];
 
-                if (shotsSequence.length === maxNotSunkShipLength) {
-                    shipsAmountsByLength.get(shotsSequence.length).sunken++;
+                if (successfulShotsSequence.length === maxNotSunkShipLength) {
+                    shipsAmountsByLength.get(successfulShotsSequence.length).sunken++;
                     return;
                 }
 
-                const {
-                    x: sequenceFirstXCoord,
-                    y: sequenceFirstYCoord,
-                } = shotsSequence[0];
+                const successfulShotsSequenceExtremeCoords = [
+                    successfulShotsSequence[successfulShotsSequence.length - 1],
+                    successfulShotsSequence[0]
+                ];
 
-                const {
-                    x: sequenceLastXCoord,
-                    y: sequenceLastYCoord,
-                } = shotsSequence[shotsSequence.length - 1];
-
-                // vertical areas
-                if (sequenceFirstXCoord === sequenceLastXCoord) {
-                    const topAdjacentShotCoords = getAdjacentShotCoords(UP, {
-                        x: sequenceFirstXCoord,
-                        y: sequenceFirstYCoord
-                    }, shotsMap);
-
-                    const bottomAdjacentShotCoords = getAdjacentShotCoords(DOWN, {
-                        x: sequenceLastXCoord,
-                        y: sequenceLastYCoord
-                    }, shotsMap);
-
-                    nextShotsSequenceCoords.push(...[topAdjacentShotCoords, bottomAdjacentShotCoords].filter(shotCoords => Boolean(shotCoords)));
+                for (
+                    let angle = successfulShotsSequenceExtremeCoords[0].x === successfulShotsSequenceExtremeCoords[1].x ? 0.5 : 0, i = 0;
+                    angle < 2;
+                    angle++, i++
+                ) {
+                    if (isAdjacentShotsSequencePossible(angle, 1, successfulShotsSequenceExtremeCoords[i], shotsMap)) {
+                        nextShotsInSequenceCoords.push({
+                            x: successfulShotsSequenceExtremeCoords[i].x + Math.round(Math.sin(angle * Math.PI)),
+                            y: successfulShotsSequenceExtremeCoords[i].y + Math.round(Math.cos(angle * Math.PI))
+                        });
+                    }
                 }
 
-                // horizontal areas
-                if (sequenceFirstYCoord === sequenceLastYCoord) {
-                    const leftAdjacentShotCoords = getAdjacentShotCoords(LEFT, {
-                        x: sequenceFirstXCoord,
-                        y: sequenceFirstYCoord
-                    }, shotsMap);
-                    const rightAdjacentShotCoords = getAdjacentShotCoords(RIGHT, {
-                        x: sequenceLastXCoord,
-                        y: sequenceLastYCoord
-                    }, shotsMap);
-
-                    nextShotsSequenceCoords.push(...[leftAdjacentShotCoords, rightAdjacentShotCoords].filter(shotCoords => Boolean(shotCoords)));
-                }
-
-                if (nextShotsSequenceCoords.length) {
-                    nextShotsCoords.push(...nextShotsSequenceCoords);
+                if (nextShotsInSequenceCoords.length) {
+                    nextShotsCoords.push(...nextShotsInSequenceCoords);
                 } else {
-                    shipsAmountsByLength.get(shotsSequence.length).sunken++
+                    shipsAmountsByLength.get(successfulShotsSequence.length).sunken++
                 }
             });
 
@@ -285,80 +199,28 @@ export const selectPlayerNextShotsCoords = createSelector(
         {
             maxNotSunkShipLength = getMaxNotSunkShipLength(shipsAmountsByLength);
 
-            const successfulSingleShotsCoords = getSuccessfulSingleShotsCoords(shotsMap);
+            const allSuccessfulSingleShotsCoords = getSuccessfulSingleShotsCoords(shotsMap);
 
-            if (maxNotSunkShipLength > 1 && successfulSingleShotsCoords.length) {
-                successfulSingleShotsCoords.forEach(singleShotCoords => {
+            if (maxNotSunkShipLength > 1 && allSuccessfulSingleShotsCoords.length) {
+                allSuccessfulSingleShotsCoords.forEach(successfulSingleShotCoords => {
                     const allAdjacentShotsCoords = [];
 
-                    const minNotSunkShipLength = getMinNotSunkShipLength(shipsAmountsByLength)
+                    const minNotSunkShipLengthLongerThanOne = getMinNotSunkShipLengthLongerThanOne(shipsAmountsByLength)
 
-                    const {
-                        x: xCoord,
-                        y: yCoord
-                    } = singleShotCoords;
-
-                    // check directions for possibly minimal ship longer than one
-                    {
-                        let isUpDirectionPossible = true;
-
-                        if (yCoord - (minNotSunkShipLength - 1) < 0) {
-                            isUpDirectionPossible = false;
-                        } else {
-                            for (let checkYCoord = yCoord; checkYCoord > yCoord - (minNotSunkShipLength - 1); checkYCoord--) {
-                                if (!getAdjacentShotCoords(UP, {x: xCoord, y: checkYCoord}, shotsMap)) {
-                                    isUpDirectionPossible = false;
-                                    break;
-                                }
-                            }
+                    for (let angle = 0; angle < 2; angle += .5) {
+                        if (
+                            isAdjacentShotsSequencePossible(
+                                angle,
+                                minNotSunkShipLengthLongerThanOne - 1,
+                                successfulSingleShotCoords,
+                                shotsMap
+                            )
+                        ) {
+                            allAdjacentShotsCoords.push({
+                                x: successfulSingleShotCoords.x + Math.round(Math.sin(angle * Math.PI)),
+                                y: successfulSingleShotCoords.y + Math.round(Math.cos(angle * Math.PI))
+                            });
                         }
-
-                        if (isUpDirectionPossible) allAdjacentShotsCoords.push(getAdjacentShotCoords(UP, singleShotCoords, shotsMap));
-
-                        let isDownDirectionPossible = true;
-
-                        if (yCoord + (minNotSunkShipLength - 1) > lastYCoord) {
-                            isDownDirectionPossible = false;
-                        } else {
-                            for (let checkYCoord = yCoord; checkYCoord < yCoord + (minNotSunkShipLength - 1); checkYCoord++) {
-                                if (!getAdjacentShotCoords(DOWN, {x: xCoord, y: checkYCoord}, shotsMap)) {
-                                    isDownDirectionPossible = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (isDownDirectionPossible) allAdjacentShotsCoords.push(getAdjacentShotCoords(DOWN, singleShotCoords, shotsMap));
-
-                        let isLeftDirectionPossible = true;
-
-                        if (xCoord - (minNotSunkShipLength - 1) < 0) {
-                            isLeftDirectionPossible = false;
-                        } else {
-                            for (let checkXCoord = xCoord; checkXCoord > xCoord - (minNotSunkShipLength - 1); checkXCoord--) {
-                                if (!getAdjacentShotCoords(LEFT, {x: checkXCoord, y: yCoord}, shotsMap)) {
-                                    isLeftDirectionPossible = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (isLeftDirectionPossible) allAdjacentShotsCoords.push(getAdjacentShotCoords(LEFT, singleShotCoords, shotsMap));
-
-                        let isRightDirectionPossible = true;
-
-                        if (xCoord + (minNotSunkShipLength - 1) > lastXCoord) {
-                            isRightDirectionPossible = false;
-                        } else {
-                            for (let checkXCoord = xCoord; checkXCoord < xCoord + (minNotSunkShipLength - 1); checkXCoord++) {
-                                if (!getAdjacentShotCoords(RIGHT, {x: checkXCoord, y: yCoord}, shotsMap)) {
-                                    isRightDirectionPossible = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (isRightDirectionPossible) allAdjacentShotsCoords.push(getAdjacentShotCoords(RIGHT, singleShotCoords, shotsMap));
                     }
 
                     if (allAdjacentShotsCoords.length) {
@@ -392,7 +254,7 @@ export const selectPlayerNextShotsCoords = createSelector(
             return notSunkShipsLengths.length ? Math.max(...notSunkShipsLengths) : undefined;
         }
 
-        function getMinNotSunkShipLength(shipsAmountsByLength) {
+        function getMinNotSunkShipLengthLongerThanOne(shipsAmountsByLength) {
             const notSunkShipsLengths = Array.from(shipsAmountsByLength.keys())
                 .filter(shipLength => {
                     const shipAmounts = shipsAmountsByLength.get(shipLength);
@@ -403,116 +265,95 @@ export const selectPlayerNextShotsCoords = createSelector(
             return notSunkShipsLengths.length ? Math.min(...notSunkShipsLengths) : undefined;
         }
 
-        function getAdjacentShotCoords(direction, adjacentToShotCoords, shotsMap) {
+        function isAdjacentShotsSequencePossible(angle, shotsSequenceLength, adjacentToCellCoords, shotsMap) {
             const {lastXCoord, lastYCoord} = shotsMap;
-            const {x: adjacentToShotXCoord, y: adjacentToShotYCoord} = adjacentToShotCoords;
+            const {x: adjacentToCellXCoord, y: adjacentToCellYCoord} = adjacentToCellCoords;
 
-            let adjacentShotCoords;
+            const xAxisFactor = Math.round(Math.sin(angle * Math.PI));
+            const yAxisFactor = Math.round(Math.cos(angle * Math.PI));
 
-            switch (direction) {
-                case UP: {
-                    if (
-                        adjacentToShotYCoord === 0 ||
-                        (adjacentToShotYCoord >= 1 && shotsMap[adjacentToShotYCoord - 1][adjacentToShotXCoord].isShooted)
-                    ) return;
+            const firstInAdjacentShotsSequenceXCoord = adjacentToCellXCoord + xAxisFactor;
+            const lastInAdjacentShotsSequenceXCoord = adjacentToCellXCoord + shotsSequenceLength * xAxisFactor;
+            const firstInAdjacentShotsSequenceYCoord = adjacentToCellYCoord + yAxisFactor;
+            const lastInAdjacentShotsSequenceYCoord = adjacentToCellYCoord + shotsSequenceLength * yAxisFactor;
 
-                    if (adjacentToShotYCoord === 1) {
-                        adjacentShotCoords = {x: adjacentToShotXCoord, y: adjacentToShotYCoord - 1};
+            let isPossible = true;
 
-                        break;
-                    }
+            if (
+                lastInAdjacentShotsSequenceXCoord < 0 ||
+                lastInAdjacentShotsSequenceXCoord > lastXCoord ||
+                lastInAdjacentShotsSequenceYCoord < 0 ||
+                lastInAdjacentShotsSequenceYCoord > lastYCoord ||
+                shotsMap.isMapAreaContaining(
+                    {isShooted: true},
+                    {x: firstInAdjacentShotsSequenceXCoord, y: firstInAdjacentShotsSequenceYCoord},
+                    {x: lastInAdjacentShotsSequenceXCoord, y: lastInAdjacentShotsSequenceYCoord})
+            ) {
+                isPossible = false;
 
-                    if (adjacentToShotYCoord > 1) {
-                        const fromXCoord = adjacentToShotXCoord === 0 ? 0 : adjacentToShotXCoord - 1;
-                        const toXCoord = adjacentToShotXCoord === lastXCoord ? lastXCoord : adjacentToShotXCoord + 1;
-
-                        for (let xCoord = fromXCoord; xCoord <= toXCoord; xCoord++) {
-                            if (shotsMap[adjacentToShotYCoord - 2][xCoord].isShotSuccessful) return;
-                        }
-                    }
-
-                    adjacentShotCoords = {x: adjacentToShotXCoord, y: adjacentToShotYCoord - 1};
-
-                    break;
-                }
-                case DOWN: {
-                    if (
-                        adjacentToShotYCoord === lastYCoord ||
-                        (adjacentToShotYCoord <= lastYCoord - 1 && shotsMap[adjacentToShotYCoord + 1][adjacentToShotXCoord].isShooted)
-                    ) return;
-
-                    if (adjacentToShotYCoord === lastYCoord - 1) {
-                        adjacentShotCoords = {x: adjacentToShotXCoord, y: adjacentToShotYCoord + 1};
-
-                        break;
-                    }
-
-                    if (adjacentToShotYCoord < lastYCoord - 1) {
-                        const fromXCoord = adjacentToShotXCoord === 0 ? 0 : adjacentToShotXCoord - 1;
-                        const toXCoord = adjacentToShotXCoord === lastXCoord ? lastXCoord : adjacentToShotXCoord + 1;
-
-                        for (let xCoord = fromXCoord; xCoord <= toXCoord; xCoord++) {
-                            if (shotsMap[adjacentToShotYCoord + 2][xCoord].isShotSuccessful) return;
-                        }
-                    }
-
-                    adjacentShotCoords = {x: adjacentToShotXCoord, y: adjacentToShotYCoord + 1}
-
-                    break;
-                }
-                case LEFT: {
-                    if (
-                        adjacentToShotXCoord === 0 ||
-                        (adjacentToShotXCoord >= 1 && shotsMap[adjacentToShotYCoord][adjacentToShotXCoord - 1].isShooted)
-                    ) return;
-
-                    if (adjacentToShotXCoord === 1) {
-                        adjacentShotCoords = {x: adjacentToShotXCoord - 1, y: adjacentToShotYCoord};
-
-                        break;
-                    }
-
-                    if (adjacentToShotXCoord > 1) {
-                        const fromYCoord = adjacentToShotYCoord === 0 ? 0 : adjacentToShotYCoord - 1;
-                        const toYCoord = adjacentToShotYCoord === lastYCoord ? lastYCoord : adjacentToShotYCoord + 1;
-
-                        for (let yCoord = fromYCoord; yCoord <= toYCoord; yCoord++) {
-                            if (shotsMap[yCoord][adjacentToShotXCoord - 2].isShotSuccessful) return;
-                        }
-                    }
-
-                    adjacentShotCoords = {x: adjacentToShotXCoord - 1, y: adjacentToShotYCoord};
-
-                    break;
-                }
-                case RIGHT: {
-                    if (
-                        adjacentToShotXCoord === lastXCoord ||
-                        (adjacentToShotXCoord <= lastXCoord - 1 && shotsMap[adjacentToShotYCoord][adjacentToShotXCoord + 1].isShooted)
-                    ) return;
-
-                    if (adjacentToShotXCoord === lastXCoord - 1) {
-                        adjacentShotCoords = {x: adjacentToShotXCoord + 1, y: adjacentToShotYCoord};
-
-                        break;
-                    }
-
-                    if (adjacentToShotXCoord < lastXCoord - 1) {
-                        const fromYCoord = adjacentToShotYCoord === 0 ? 0 : adjacentToShotYCoord - 1;
-                        const toYCoord = adjacentToShotYCoord === lastYCoord ? lastYCoord : adjacentToShotYCoord + 1;
-
-                        for (let yCoord = fromYCoord; yCoord <= toYCoord; yCoord++) {
-                            if (shotsMap[yCoord][adjacentToShotXCoord + 2].isShotSuccessful) return;
-                        }
-                    }
-
-                    adjacentShotCoords = {x: adjacentToShotXCoord + 1, y: adjacentToShotYCoord};
-
-                    break;
-                }
+                return isPossible;
             }
 
-            return adjacentShotCoords;
+            if (
+                shotsSequenceLength === 1 && (
+                    xAxisFactor && (lastInAdjacentShotsSequenceXCoord === 0 || lastInAdjacentShotsSequenceXCoord === lastXCoord) ||
+                    yAxisFactor && (lastInAdjacentShotsSequenceYCoord === 0 || lastInAdjacentShotsSequenceYCoord === lastYCoord)
+                )
+            ) {
+                return isPossible;
+            }
+
+            const [minXAxisOffset, minYAxisOffset] = [
+                {
+                    adjacentToCellAxisCoord: adjacentToCellXCoord,
+                    axisFactor: xAxisFactor
+                },
+                {
+                    adjacentToCellAxisCoord: adjacentToCellYCoord,
+                    axisFactor: yAxisFactor
+                }
+            ].map(({adjacentToCellAxisCoord, axisFactor}) => (
+                axisFactor ?
+                    2 * axisFactor :
+                    (adjacentToCellAxisCoord === 0 ? 0 : -1)
+            ));
+
+            const [maxXAxisOffset, maxYAxisOffset] = [
+                {
+                    adjacentToCellAxisCoord: adjacentToCellXCoord,
+                    lastInAdjacentShotsSequenceAxisCoord: lastInAdjacentShotsSequenceXCoord,
+                    lastAxisCoord: lastXCoord,
+                    axisFactor: xAxisFactor
+                },
+                {
+                    adjacentToCellAxisCoord: adjacentToCellYCoord,
+                    lastInAdjacentShotsSequenceAxisCoord: lastInAdjacentShotsSequenceYCoord,
+                    lastAxisCoord: lastYCoord,
+                    axisFactor: yAxisFactor
+                }
+            ].map(({adjacentToCellAxisCoord, lastInAdjacentShotsSequenceAxisCoord, lastAxisCoord, axisFactor}) => (
+                axisFactor ?
+                    (
+                        lastInAdjacentShotsSequenceAxisCoord === 0 || lastInAdjacentShotsSequenceAxisCoord === lastAxisCoord ?
+                            shotsSequenceLength * axisFactor :
+                            (shotsSequenceLength + 1) * axisFactor
+                    ) :
+                    (adjacentToCellAxisCoord === lastAxisCoord ? 0 : 1)
+            ));
+
+            const fromXCoord = adjacentToCellXCoord + minXAxisOffset;
+            const toXCoord = adjacentToCellXCoord + maxXAxisOffset;
+
+            const fromYCoord = adjacentToCellYCoord + minYAxisOffset;
+            const toYCoord = adjacentToCellYCoord + maxYAxisOffset;
+
+            isPossible = !shotsMap.isMapAreaContaining(
+                {isShotSuccessful: true},
+                {x: fromXCoord, y: fromYCoord},
+                {x: toXCoord, y: toYCoord}
+            );
+
+            return isPossible;
         }
 
         function getSuccessfulSingleShotsCoords(shotsMap) {
@@ -521,21 +362,25 @@ export const selectPlayerNextShotsCoords = createSelector(
             const {lastXCoord, lastYCoord} = shotsMap;
 
             for (let yCoord = 0; yCoord <= lastYCoord; yCoord++) {
-                for (let xCoord = 0; xCoord <= lastXCoord; xCoord++) {
+                loopOverShotsMapXCoord: for (let xCoord = 0; xCoord <= lastXCoord; xCoord++) {
                     if (!shotsMap[yCoord][xCoord].isShotSuccessful) continue;
 
-                    const topAdjacentCell = yCoord > 0 ? shotsMap[yCoord - 1][xCoord] : undefined;
-                    const bottomAdjacentCell = yCoord < lastYCoord ? shotsMap[yCoord + 1][xCoord] : undefined;
-                    const leftAdjacentCell = xCoord > 0 ? shotsMap[yCoord][xCoord - 1] : undefined;
-                    const rightAdjacentCell = xCoord < lastXCoord ? shotsMap[yCoord][xCoord + 1] : undefined;
+                    for (let angle = 0; angle < 2; angle += .5) {
+                        const adjacentCellXCoord = xCoord + Math.round(Math.sin(angle * Math.PI));
+                        const adjacentCellYCoord = yCoord + Math.round(Math.cos(angle * Math.PI));
 
-                    if (
-                        [topAdjacentCell, bottomAdjacentCell, leftAdjacentCell, rightAdjacentCell]
-                            .filter(cell => Boolean(cell))
-                            .every(cell => !cell.isShotSuccessful)
-                    ) {
-                        successfulSingleShotsCoords.push({x: xCoord, y: yCoord});
+                        if (
+                            adjacentCellXCoord >= 0 &&
+                            adjacentCellXCoord <= lastXCoord &&
+                            adjacentCellYCoord >= 0 &&
+                            adjacentCellYCoord <= lastYCoord &&
+                            shotsMap[adjacentCellYCoord][adjacentCellXCoord].isShotSuccessful
+                        ) {
+                            continue loopOverShotsMapXCoord;
+                        }
                     }
+
+                    successfulSingleShotsCoords.push({x: xCoord, y: yCoord});
                 }
             }
 
@@ -548,106 +393,46 @@ export const selectPlayerNextShotsCoords = createSelector(
             const {lastXCoord, lastYCoord} = shotsMap;
 
             for (let yCoord = 0; yCoord <= lastYCoord; yCoord++) {
-                loopOverShotsMapXCoord: for (let xCoord = 0; xCoord <= lastXCoord; xCoord++) {
+                for (let xCoord = 0; xCoord <= lastXCoord; xCoord++) {
 
                     if (shotsMap[yCoord][xCoord].isShooted) continue;
 
+                    const fromXCoord = xCoord === 0 ? 0 : xCoord - 1;
+                    const toXCoord = xCoord === lastXCoord ? lastXCoord : xCoord + 1;
+                    const fromYCoord = yCoord === 0 ? 0 : yCoord - 1;
+                    const toYCoord = yCoord === lastYCoord ? lastYCoord : yCoord + 1;
+
+                    if (
+                        shotsMap.isMapAreaContaining(
+                            {isShotSuccessful: true},
+                            {x: fromXCoord, y: fromYCoord},
+                            {x: toXCoord, y: toYCoord}
+                            )
+                    ) continue;
+
                     const searchShotDescription = {
                         coords: {
-                            x: null,
-                            y: null,
+                            x: xCoord,
+                            y: yCoord,
                         },
                         possibleDirections: 0
                     };
 
-                    // check for shot block by previous successful shots
-                    {
-                        const fromXCoord = xCoord === 0 ? 0 : xCoord - 1;
-                        const toXCoord = xCoord === lastXCoord ? lastXCoord : xCoord + 1;
-                        const fromYCoord = yCoord === 0 ? 0 : yCoord - 1;
-                        const toYCoord = yCoord === lastYCoord ? lastYCoord : yCoord + 1;
-
-                        for (let checkYCoord = fromYCoord; checkYCoord <= toYCoord; checkYCoord++) {
-                            for (let checkXCoord = fromXCoord; checkXCoord <= toXCoord; checkXCoord++) {
-                                if (checkXCoord === xCoord && checkYCoord === yCoord) continue;
-
-                                if (shotsMap[checkYCoord][checkXCoord].isShotSuccessful) continue loopOverShotsMapXCoord;
-                            }
-                        }
-
-                        searchShotDescription.coords.x = xCoord;
-                        searchShotDescription.coords.y = yCoord;
-
-                        if (shipLength === 1) {
-                            allSearchShotsDescriptions.push(searchShotDescription);
-                            continue;
-                        }
+                    if (shipLength === 1) {
+                        allSearchShotsDescriptions.push(searchShotDescription);
+                        continue;
                     }
 
-                    // check for the number of directions in which a ship could be placed at these coordinates
-                    {
-                        let isUpDirectionPossible = true;
-
-                        if (yCoord - (shipLength - 1) < 0) {
-                            isUpDirectionPossible = false;
-                        } else {
-                            for (let checkYCoord = yCoord; checkYCoord > yCoord - (shipLength - 1); checkYCoord--) {
-                                if (!getAdjacentShotCoords(UP, {x: xCoord, y: checkYCoord}, shotsMap)) {
-                                    isUpDirectionPossible = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (isUpDirectionPossible) searchShotDescription.possibleDirections++;
-
-                        let isDownDirectionPossible = true;
-
-                        if (yCoord + (shipLength - 1) > lastYCoord) {
-                            isDownDirectionPossible = false;
-                        } else {
-                            for (let checkYCoord = yCoord; checkYCoord < yCoord + (shipLength - 1); checkYCoord++) {
-                                if (!getAdjacentShotCoords(DOWN, {x: xCoord, y: checkYCoord}, shotsMap)) {
-                                    isDownDirectionPossible = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (isDownDirectionPossible) searchShotDescription.possibleDirections++;
-
-                        let isLeftDirectionPossible = true;
-
-                        if (xCoord - (shipLength - 1) < 0) {
-                            isLeftDirectionPossible = false;
-                        } else {
-                            for (let checkXCoord = xCoord; checkXCoord > xCoord - (shipLength - 1); checkXCoord--) {
-                                if (!getAdjacentShotCoords(LEFT, {x: checkXCoord, y: yCoord}, shotsMap)) {
-                                    isLeftDirectionPossible = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (isLeftDirectionPossible) searchShotDescription.possibleDirections++;
-
-                        let isRightDirectionPossible = true;
-
-                        if (xCoord + (shipLength - 1) > lastXCoord) {
-                            isRightDirectionPossible = false;
-                        } else {
-                            for (let checkXCoord = xCoord; checkXCoord < xCoord + (shipLength - 1); checkXCoord++) {
-                                if (!getAdjacentShotCoords(RIGHT, {x: checkXCoord, y: yCoord}, shotsMap)) {
-                                    isRightDirectionPossible = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (isRightDirectionPossible) searchShotDescription.possibleDirections++;
-
-                        if (searchShotDescription.possibleDirections) {
-                            allSearchShotsDescriptions.push(searchShotDescription);
+                    for (let angle = 0; angle < 2; angle += .5) {
+                        if (
+                            isAdjacentShotsSequencePossible(
+                                angle,
+                                shipLength - 1,
+                                searchShotDescription.coords,
+                                shotsMap
+                            )
+                        ) {
+                            searchShotDescription.possibleDirections++;
                         }
                     }
                 }
@@ -709,51 +494,19 @@ export const selectPlayerGameMap = createSelector(
     (playerDeploymentHistory, opponentShotsHistory, settingsShips, gridDescription) => {
         if (!playerDeploymentHistory || !opponentShotsHistory || !settingsShips || !gridDescription) return;
 
-        const playerGameMap = new GridMap(gridDescription.width, gridDescription.height, {isOccupied: false, isShooted: false});
+        const playerDeploymentsDescriptions = playerDeploymentHistory.map(({anchorCoords, angle, shipId}) => ({
+            anchorCoords,
+            angle,
+            length: settingsShips[shipId].length,
+        }));
 
-        playerDeploymentHistory.forEach(deploymentDescription => {
-            const {
-                anchorCoords: {
-                    x: anchorXCoord,
-                    y: anchorYCoord,
-                },
-                direction: deploymentDirection,
-                shipId,
-            } = deploymentDescription;
+        const opponentShotsDescriptions = opponentShotsHistory.map(({coords}) => ({
+            coords,
+        }));
 
-            const shipLength = settingsShips[shipId].length;
+        const {width: mapWidth, height: mapHeight} = gridDescription;
 
-            // cells which become occupied
-            switch (deploymentDirection) {
-                case HORIZONTAL: {
-                    for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + (shipLength - 1); xCoord++) {
-                        playerGameMap[anchorYCoord][xCoord].isOccupied = true;
-                    }
-
-                    break;
-                }
-                case VERTICAL: {
-                    for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + (shipLength - 1); yCoord++) {
-                        playerGameMap[yCoord][anchorXCoord].isOccupied = true;
-                    }
-
-                    break;
-                }
-            }
-        });
-
-        opponentShotsHistory.forEach(shotDescription => {
-            const {
-                coords: {
-                    x: shotXCoord,
-                    y: shotYCoord,
-                },
-            } = shotDescription;
-
-            playerGameMap[shotYCoord][shotXCoord].isShooted = true;
-        });
-
-        return playerGameMap;
+        return new GameMap(mapWidth, mapHeight, playerDeploymentsDescriptions, opponentShotsDescriptions);
     }
 );
 
@@ -908,8 +661,11 @@ class GridMap extends Array {
                 length: shipLength,
             } = description;
 
-            const xAxisOffset = (shipLength - 1) * Math.round(Math.sin(deploymentAngle));
-            const yAxisOffset = (shipLength - 1) * Math.round(Math.cos(deploymentAngle));
+            const xAxisFactor = Math.round(Math.sin(deploymentAngle * Math.PI));
+            const yAxisFactor = Math.round(Math.cos(deploymentAngle * Math.PI));
+
+            const xAxisOffset = (shipLength - 1) * xAxisFactor;
+            const yAxisOffset = (shipLength - 1) * yAxisFactor;
 
             for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + yAxisOffset; yCoord++) {
                 for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + xAxisOffset; xCoord++) {
@@ -955,8 +711,11 @@ class DeploymentMap extends GridMap {
             */
             const {lastXCoord, lastYCoord} = this;
 
-            const xAxisOffset = (shipLength - 1) * Math.round(Math.sin(deploymentAngle));
-            const yAxisOffset = (shipLength - 1) * Math.round(Math.cos(deploymentAngle));
+            const xAxisFactor = Math.round(Math.sin(deploymentAngle * Math.PI));
+            const yAxisFactor = Math.round(Math.cos(deploymentAngle * Math.PI));
+
+            const xAxisOffset = (shipLength - 1) * xAxisFactor;
+            const yAxisOffset = (shipLength - 1) * yAxisFactor;
 
             const fromXCoord = anchorXCoord === 0 ? 0 : anchorXCoord - 1;
             const toXCoord = anchorXCoord + xAxisOffset + 1 > lastXCoord ? lastXCoord : anchorXCoord + xAxisOffset + 1;
