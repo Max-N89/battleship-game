@@ -110,8 +110,8 @@ export const selectPlayerShotsMap = createSelector(
 export const selectPlayerAvailableDeploymentAnchors = createSelector(
     [
         (state, playerId) => selectPlayerDeploymentMap(state, playerId),
-        (state, playerId, shipId) => selectSettingsShips(state)?.[shipId]?.length,
-        (state, playerId, shipId, deploymentDirection) => deploymentDirection,
+        (state, playerId, shipLength) => shipLength,
+        (state, playerId, shipLength, deploymentDirection) => deploymentDirection,
     ],
     (deploymentMap, shipLength, deploymentDirection) => {
         if (!deploymentMap || !shipLength || !deploymentDirection) return;
