@@ -23,30 +23,30 @@ const gameSlice = createSlice({
     reducers: {
         deploy: {
             reducer(state, action) {
-                const {playerId, deploymentDescription} = action.payload;
+                const {playerId, deploymentHistoryRecord} = action.payload;
 
-                state.players.entities[playerId].deploymentHistory.push(deploymentDescription);
+                state.players.entities[playerId].deploymentHistory.push(deploymentHistoryRecord);
             },
-            prepare(playerId, deploymentDescription) {
+            prepare(playerId, deploymentHistoryRecord) {
                 return {
                     payload: {
                         playerId,
-                        deploymentDescription,
+                        deploymentHistoryRecord,
                     }
                 };
             }
         },
         shoot: {
             reducer(state, action) {
-                const {playerId, shotDescription} = action.payload;
+                const {playerId, shotsHistoryRecord} = action.payload;
 
-                state.players.entities[playerId].shotsHistory.push(shotDescription);
+                state.players.entities[playerId].shotsHistory.push(shotsHistoryRecord);
             },
-            prepare(playerId, shotDescription) {
+            prepare(playerId, shotsHistoryRecord) {
                 return {
                     payload: {
                         playerId,
-                        shotDescription,
+                        shotsHistoryRecord,
                     }
                 };
             }
@@ -92,28 +92,24 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
         undeployedShips[0] :
         undeployedShips[getRandomInteger(0, undeployedShips.length - 1)];
 
-    const deploymentDescription = {
-        shipId: shipEntityToDeploy.id,
-        direction: [HORIZONTAL, VERTICAL][getRandomInteger(0, 1)],
-    };
+    let deploymentDirection = [HORIZONTAL, VERTICAL][getRandomInteger(0, 1)];
 
     let availableDeploymentAnchors = selectPlayerAvailableDeploymentAnchors(
         state,
         playerId,
-        deploymentDescription.shipId,
-        deploymentDescription.direction
+        shipEntityToDeploy.length,
+        deploymentDirection,
     );
 
     // switch deployment direction in case when there are no available spots to deploy with previous direction
     if (!availableDeploymentAnchors.length) {
-        deploymentDescription.direction = deploymentDescription.direction === HORIZONTAL ?
-            VERTICAL : HORIZONTAL;
+        deploymentDirection = deploymentDirection === HORIZONTAL ? VERTICAL : HORIZONTAL;
 
         availableDeploymentAnchors = selectPlayerAvailableDeploymentAnchors(
             state,
             playerId,
-            deploymentDescription.shipId,
-            deploymentDescription.direction
+            shipEntityToDeploy.length,
+            deploymentDirection,
         );
     }
 
@@ -130,13 +126,17 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
         return;
     }
 
-    deploymentDescription.anchorCoords = availableDeploymentAnchors.length === 1 ?
-        availableDeploymentAnchors[0] :
-        availableDeploymentAnchors[getRandomInteger(0, availableDeploymentAnchors.length - 1)];
+    const deploymentHistoryRecord = {
+        anchorCoords: availableDeploymentAnchors.length === 1 ?
+            availableDeploymentAnchors[0] :
+            availableDeploymentAnchors[getRandomInteger(0, availableDeploymentAnchors.length - 1)],
+        angle: deploymentDirection === HORIZONTAL ? .5 : 0,
+        shipId: shipEntityToDeploy.id,
+    }
 
     dispatch(gameDeploy(
         playerId,
-        deploymentDescription
+        deploymentHistoryRecord
     ));
 };
 
@@ -156,14 +156,14 @@ export const gameAutoShot = playerId => (dispatch, getState) => {
         return;
     }
 
-    const shotDescription = {
+    const shotsHistoryRecord = {
         coords: nextShotCoords.length === 1 ?
             nextShotCoords[0] : nextShotCoords[getRandomInteger(0, nextShotCoords.length - 1)],
     };
 
     dispatch(gameShoot(
         playerId,
-        shotDescription
+        shotsHistoryRecord
     ));
 };
 
