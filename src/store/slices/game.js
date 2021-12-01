@@ -2,20 +2,17 @@ import {createSlice, nanoid} from "@reduxjs/toolkit";
 
 import {
     selectPlayerUndeployedShips,
-    selectPlayerAvailableDeploymentAnchors,
+    selectPlayerAvailableDeploymentAnchorsCoords,
     selectPlayerNextShotsCoords,
     selectPlayersIds,
     selectScoreToWin,
     selectPlayerScore,
     selectPlayerShotsHistory,
-    selectPlayerDeploymentMap,
-    selectPlayerShotsMap,
+    selectPlayerDeploymentGridMap,
+    selectPlayerShotsGridMap,
 } from "../game-selectors";
 
-import {DIRECTIONS} from "../../constants";
 import {GameError} from "../../custom-errors";
-
-const {HORIZONTAL, VERTICAL} = DIRECTIONS;
 
 const gameSlice = createSlice({
     name: "game",
@@ -92,32 +89,36 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
         undeployedShips[0] :
         undeployedShips[getRandomInteger(0, undeployedShips.length - 1)];
 
-    let deploymentDirection = [HORIZONTAL, VERTICAL][getRandomInteger(0, 1)];
+    let deploymentAngle = [0, .5][getRandomInteger(0, 1)];
 
-    let availableDeploymentAnchors = selectPlayerAvailableDeploymentAnchors(
+    /* IMPORTANT: DEPLOYMENT ANGLES
+        for selectPlayerAvailableDeploymentAnchorsCoords only supported deployment angles are 0 and .5
+    */
+    let availableDeploymentAnchorsCoords = selectPlayerAvailableDeploymentAnchorsCoords(
         state,
         playerId,
-        shipEntityToDeploy.length,
-        deploymentDirection,
+        shipEntityToDeploy.id,
+        deploymentAngle,
     );
 
-    // switch deployment direction in case when there are no available spots to deploy with previous direction
-    if (!availableDeploymentAnchors.length) {
-        deploymentDirection = deploymentDirection === HORIZONTAL ? VERTICAL : HORIZONTAL;
+    // switch deployment angle in case when there are no available spots for deployment with previous angle value
+    if (!availableDeploymentAnchorsCoords.length) {
+        deploymentAngle = deploymentAngle === 0 ? .5 : 0;
 
-        availableDeploymentAnchors = selectPlayerAvailableDeploymentAnchors(
+        availableDeploymentAnchorsCoords = selectPlayerAvailableDeploymentAnchorsCoords(
             state,
             playerId,
-            shipEntityToDeploy.length,
-            deploymentDirection,
+            shipEntityToDeploy.id,
+            deploymentAngle,
         );
     }
 
-    if (!availableDeploymentAnchors.length) {
-        const errorMessage = "Unable to perform ship auto-deployment in any direction.";
+    if (!availableDeploymentAnchorsCoords.length) {
+        const errorMessage = "Unable to perform auto-deployment.";
+
         const errorCause = {
             playerId,
-            deploymentMap: selectPlayerDeploymentMap(state, playerId),
+            deploymentMap: selectPlayerDeploymentGridMap(state, playerId),
             ship: shipEntityToDeploy,
         };
 
@@ -127,10 +128,10 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
     }
 
     const deploymentHistoryRecord = {
-        anchorCoords: availableDeploymentAnchors.length === 1 ?
-            availableDeploymentAnchors[0] :
-            availableDeploymentAnchors[getRandomInteger(0, availableDeploymentAnchors.length - 1)],
-        angle: deploymentDirection === HORIZONTAL ? .5 : 0,
+        anchorCoords: availableDeploymentAnchorsCoords.length === 1 ?
+            availableDeploymentAnchorsCoords[0] :
+            availableDeploymentAnchorsCoords[getRandomInteger(0, availableDeploymentAnchorsCoords.length - 1)],
+        angle: deploymentAngle,
         shipId: shipEntityToDeploy.id,
     }
 
@@ -142,13 +143,20 @@ export const gameAutoDeploy = playerId => (dispatch, getState) => {
 
 export const gameAutoShot = playerId => (dispatch, getState) => {
     const state = getState();
+
+    /* IMPORTANT/TODO: NEXT SHOT COORDINATES
+        selectPlayerNextShotsCoords is limited in search for next shot coordinates,
+        currently it is not suitable for searching player's (person) next shot coordinates
+        in cases when the player's successful shots are extreme for a single opponent's ship
+        and there is unshooted gap between them
+    */
     const nextShotCoords = selectPlayerNextShotsCoords(state, playerId);
 
     if (!nextShotCoords.length) {
         const errorMessage = "Unable to perform auto-shot.";
         const errorCause = {
             playerId,
-            shotsMap: selectPlayerShotsMap(state, playerId),
+            shotsMap: selectPlayerShotsGridMap(state, playerId),
         };
 
         dispatch(gameError(new GameError(errorMessage, errorCause)));

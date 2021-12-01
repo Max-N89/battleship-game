@@ -1,9 +1,6 @@
 import {createSelector} from "@reduxjs/toolkit";
 
-import {DIRECTIONS} from "../constants";
 import {GameError} from "../custom-errors";
-
-const {HORIZONTAL, VERTICAL, UP, DOWN, LEFT, RIGHT} = DIRECTIONS;
 
 export const selectErrors = state => (
     state.game?.errors
@@ -45,14 +42,6 @@ export const selectPlayerOpponentId = (state, playerId) => (
     selectPlayerEntity(state, playerId)?.opponentId
 );
 
-export const selectPlayerOpponentShotsHistory = (state, playerId) => {
-    const opponentId = selectPlayerOpponentId(state, playerId);
-
-    if (!opponentId) return;
-
-    return selectPlayerShotsHistory(state, opponentId);
-};
-
 export const selectPlayerUndeployedShips = createSelector(
     [
         (state, playerId) => selectPlayerDeploymentHistory(state, playerId),
@@ -67,14 +56,14 @@ export const selectPlayerUndeployedShips = createSelector(
     }
 );
 
-export const selectPlayerDeploymentMap = createSelector(
+export const selectPlayerDeploymentGridMap = createSelector(
     [
         (state, playerId) => selectPlayerDeploymentHistory(state, playerId),
         selectSettingsShips,
         selectSettingsGridDescription,
     ],
-    (deploymentHistory, settingsShips, gridDescription) => {
-        if (!deploymentHistory || !settingsShips || !gridDescription) return;
+    (deploymentHistory, settingsShips, settingsGridDescription) => {
+        if (!deploymentHistory || !settingsShips || !settingsGridDescription) return;
 
         const deploymentsDescriptions = deploymentHistory.map(({anchorCoords, angle, shipId}) => ({
             anchorCoords,
@@ -82,56 +71,61 @@ export const selectPlayerDeploymentMap = createSelector(
             length: settingsShips[shipId].length,
         }));
 
-        const {width: mapWidth, height: mapHeight} = gridDescription;
+        const {width, height} = settingsGridDescription;
 
-        return new DeploymentMap(mapWidth, mapHeight, deploymentsDescriptions);
+        return new DeploymentGridMap(width, height, deploymentsDescriptions);
     }
 );
 
-export const selectPlayerShotsMap = createSelector(
+export const selectPlayerShotsGridMap = createSelector(
     [
         (state, playerId) => selectPlayerShotsHistory(state, playerId),
-        (state, playerId) => selectPlayerDeploymentMap(state, selectPlayerOpponentId(state, playerId)),
+        (state, playerId) => selectPlayerDeploymentGridMap(state, selectPlayerOpponentId(state, playerId)),
         selectSettingsGridDescription,
     ],
-    (playerShotsHistory, opponentDeploymentMap, gridDescription) => {
-        if (!playerShotsHistory || !opponentDeploymentMap || !gridDescription) return;
+    (playerShotsHistory, opponentDeploymentGridMap, settingsGridDescription) => {
+        if (!playerShotsHistory || !opponentDeploymentGridMap || !settingsGridDescription) return;
 
         const playerShotsDescriptions = playerShotsHistory.map(({coords}) => ({
             coords,
         }));
 
-        const {width: mapWidth, height: mapHeight} = gridDescription;
+        const {width, height} = settingsGridDescription;
 
-        return new ShotsMap(mapWidth, mapHeight, playerShotsDescriptions, opponentDeploymentMap);
+        return new ShotsGridMap(width, height, playerShotsDescriptions, opponentDeploymentGridMap);
     }
 );
 
-export const selectPlayerAvailableDeploymentAnchors = createSelector(
+export const selectPlayerAvailableDeploymentAnchorsCoords = createSelector(
     [
-        (state, playerId) => selectPlayerDeploymentMap(state, playerId),
-        (state, playerId, shipLength) => shipLength,
-        (state, playerId, shipLength, deploymentDirection) => deploymentDirection,
+        (state, playerId) => selectPlayerDeploymentGridMap(state, playerId),
+        (state, playerId, shipId) => selectSettingsShips(state)?.[shipId]?.length,
+        (state, playerId, shipId, deploymentAngle) => deploymentAngle,
     ],
-    (deploymentMap, shipLength, deploymentDirection) => {
-        if (!deploymentMap || !shipLength || !deploymentDirection) return;
+    (deploymentGridMap, shipLength, deploymentAngle) => {
+        if (!deploymentGridMap || !shipLength || deploymentAngle === undefined) return;
 
-        return deploymentMap.getContinuousCellsSequence({isUndeployable: false}, deploymentDirection)
-            .filter(area => area.length >= shipLength)
-            .map(area => area.slice(0, area.length - (shipLength - 1)))
+        const alongXAxis = Boolean(Math.round(Math.sin(deploymentAngle * Math.PI)));
+
+        /* IMPORTANT: DEPLOYMENT ANGLES
+            bottleneck for valid deployment angles (0 and .5), checkout sequence.slice()
+            for removing angle limitations
+        */
+        return deploymentGridMap.getContinuousCellsSequence({isUndeployable: false}, alongXAxis)
+            .filter(sequence => sequence.length >= shipLength)
+            .map(sequence => sequence.slice(0, sequence.length - (shipLength - 1)))
             .flat();
     }
 );
 
 export const selectPlayerNextShotsCoords = createSelector(
     [
-        (state, playerId) => selectPlayerShotsMap(state, playerId),
+        (state, playerId) => selectPlayerShotsGridMap(state, playerId),
         selectSettingsShips,
     ],
-    (shotsMap, settingsShips) => {
-        if (!shotsMap || !settingsShips) return;
+    (shotsGridMap, settingsShips) => {
+        if (!shotsGridMap || !settingsShips) return;
 
-        const {lastXCoord, lastYCoord} = shotsMap;
         const nextShotsCoords = [];
         const shipsAmountsByLength = new Map();
 
@@ -148,14 +142,14 @@ export const selectPlayerNextShotsCoords = createSelector(
 
         let maxNotSunkShipLength;
 
-        // check for next shots coords at possibly unfinished shots sequences and count sunken ships with length more than 1
+        // check for next shots coordinates at possibly unfinished shots sequences and count sunken ships with length more than 1
         {
             const allSuccessfulShotsSequences = [
-                ...shotsMap.getContinuousCellsSequence({isShotSuccessful: true}, HORIZONTAL),
-                ...shotsMap.getContinuousCellsSequence({isShotSuccessful: true}, VERTICAL),
+                ...shotsGridMap.getContinuousCellsSequence({isShotSuccessful: true}, true),
+                ...shotsGridMap.getContinuousCellsSequence({isShotSuccessful: true}, false),
             ]
                 .sort((a, b) => b.length - a.length)
-                .filter(area => area.length > 1);
+                .filter(sequence => sequence.length > 1);
 
             if (allSuccessfulShotsSequences.length) allSuccessfulShotsSequences.forEach(successfulShotsSequence => {
                 maxNotSunkShipLength = getMaxNotSunkShipLength(shipsAmountsByLength);
@@ -172,12 +166,20 @@ export const selectPlayerNextShotsCoords = createSelector(
                     successfulShotsSequence[0]
                 ];
 
-                for (
-                    let angle = successfulShotsSequenceExtremeCoords[0].x === successfulShotsSequenceExtremeCoords[1].x ? 0.5 : 0, i = 0;
-                    angle < 2;
-                    angle++, i++
-                ) {
-                    if (isAdjacentShotsSequencePossible(angle, 1, successfulShotsSequenceExtremeCoords[i], shotsMap)) {
+                let angle = successfulShotsSequenceExtremeCoords[0].x === successfulShotsSequenceExtremeCoords[1].x ?
+                    0 : .5;
+
+                let i = 0;
+
+                for (angle, i; angle < 2; angle++, i++) {
+                    if (
+                        isAdjacentShotsSequencePossible(
+                            angle,
+                            1,
+                            successfulShotsSequenceExtremeCoords[i],
+                            shotsGridMap
+                        )
+                    ) {
                         nextShotsInSequenceCoords.push({
                             x: successfulShotsSequenceExtremeCoords[i].x + Math.round(Math.sin(angle * Math.PI)),
                             y: successfulShotsSequenceExtremeCoords[i].y + Math.round(Math.cos(angle * Math.PI))
@@ -195,11 +197,11 @@ export const selectPlayerNextShotsCoords = createSelector(
             if (nextShotsCoords.length) return nextShotsCoords;
         }
 
-        // check for next shots coords at successful single shots and count sunken ships with length equal to one
+        // check for next shots coordinates at successful single shots and count sunken ships with length equal to one
         {
             maxNotSunkShipLength = getMaxNotSunkShipLength(shipsAmountsByLength);
 
-            const allSuccessfulSingleShotsCoords = getSuccessfulSingleShotsCoords(shotsMap);
+            const allSuccessfulSingleShotsCoords = getSuccessfulSingleShotsCoords(shotsGridMap);
 
             if (maxNotSunkShipLength > 1 && allSuccessfulSingleShotsCoords.length) {
                 allSuccessfulSingleShotsCoords.forEach(successfulSingleShotCoords => {
@@ -213,7 +215,7 @@ export const selectPlayerNextShotsCoords = createSelector(
                                 angle,
                                 minNotSunkShipLengthLongerThanOne - 1,
                                 successfulSingleShotCoords,
-                                shotsMap
+                                shotsGridMap
                             )
                         ) {
                             allAdjacentShotsCoords.push({
@@ -238,10 +240,10 @@ export const selectPlayerNextShotsCoords = createSelector(
         {
             maxNotSunkShipLength = getMaxNotSunkShipLength(shipsAmountsByLength);
 
-            return getSearchShotsCoords(maxNotSunkShipLength, shotsMap);
+            return getSearchShotsCoords(maxNotSunkShipLength, shotsGridMap);
         }
 
-        // *** SUPPLEMENTS ***
+        // *** supplements ***
 
         function getMaxNotSunkShipLength(shipsAmountsByLength) {
             const notSunkShipsLengths = Array.from(shipsAmountsByLength.keys())
@@ -284,7 +286,7 @@ export const selectPlayerNextShotsCoords = createSelector(
                 lastInAdjacentShotsSequenceXCoord > lastXCoord ||
                 lastInAdjacentShotsSequenceYCoord < 0 ||
                 lastInAdjacentShotsSequenceYCoord > lastYCoord ||
-                shotsMap.isMapAreaContaining(
+                shotsMap.isAreaContaining(
                     {isShooted: true},
                     {x: firstInAdjacentShotsSequenceXCoord, y: firstInAdjacentShotsSequenceYCoord},
                     {x: lastInAdjacentShotsSequenceXCoord, y: lastInAdjacentShotsSequenceYCoord})
@@ -303,6 +305,7 @@ export const selectPlayerNextShotsCoords = createSelector(
                 return isPossible;
             }
 
+            // minimal (if in absolute values) axis offsets
             const [minXAxisOffset, minYAxisOffset] = [
                 {
                     adjacentToCellAxisCoord: adjacentToCellXCoord,
@@ -318,6 +321,7 @@ export const selectPlayerNextShotsCoords = createSelector(
                     (adjacentToCellAxisCoord === 0 ? 0 : -1)
             ));
 
+            // maximum (if in absolute values) axis offsets
             const [maxXAxisOffset, maxYAxisOffset] = [
                 {
                     adjacentToCellAxisCoord: adjacentToCellXCoord,
@@ -347,7 +351,7 @@ export const selectPlayerNextShotsCoords = createSelector(
             const fromYCoord = adjacentToCellYCoord + minYAxisOffset;
             const toYCoord = adjacentToCellYCoord + maxYAxisOffset;
 
-            isPossible = !shotsMap.isMapAreaContaining(
+            isPossible = !shotsMap.isAreaContaining(
                 {isShotSuccessful: true},
                 {x: fromXCoord, y: fromYCoord},
                 {x: toXCoord, y: toYCoord}
@@ -370,13 +374,16 @@ export const selectPlayerNextShotsCoords = createSelector(
                         const adjacentCellYCoord = yCoord + Math.round(Math.cos(angle * Math.PI));
 
                         if (
-                            adjacentCellXCoord >= 0 &&
-                            adjacentCellXCoord <= lastXCoord &&
-                            adjacentCellYCoord >= 0 &&
-                            adjacentCellYCoord <= lastYCoord &&
-                            shotsMap[adjacentCellYCoord][adjacentCellXCoord].isShotSuccessful
+                            adjacentCellXCoord < 0 ||
+                            adjacentCellXCoord > lastXCoord ||
+                            adjacentCellYCoord < 0 ||
+                            adjacentCellYCoord > lastYCoord
                         ) {
-                            continue loopOverShotsMapXCoord;
+                            continue;
+                        }
+
+                        if (shotsMap[adjacentCellYCoord][adjacentCellXCoord].isShotSuccessful) {
+                            continue loopOverShotsMapXCoord
                         }
                     }
 
@@ -403,7 +410,7 @@ export const selectPlayerNextShotsCoords = createSelector(
                     const toYCoord = yCoord === lastYCoord ? lastYCoord : yCoord + 1;
 
                     if (
-                        shotsMap.isMapAreaContaining(
+                        shotsMap.isAreaContaining(
                             {isShotSuccessful: true},
                             {x: fromXCoord, y: fromYCoord},
                             {x: toXCoord, y: toYCoord}
@@ -418,8 +425,9 @@ export const selectPlayerNextShotsCoords = createSelector(
                         possibleDirections: 0
                     };
 
+                    allSearchShotsDescriptions.push(searchShotDescription);
+
                     if (shipLength === 1) {
-                        allSearchShotsDescriptions.push(searchShotDescription);
                         continue;
                     }
 
@@ -452,6 +460,32 @@ export const selectPlayerNextShotsCoords = createSelector(
     }
 );
 
+export const selectPlayerGameGridMap = createSelector(
+    [
+        (state, playerId) => selectPlayerDeploymentHistory(state, playerId),
+        (state, playerId) => selectPlayerShotsHistory(state, selectPlayerOpponentId(state, playerId)),
+        selectSettingsShips,
+        selectSettingsGridDescription,
+    ],
+    (playerDeploymentHistory, opponentShotsHistory, settingsShips, settingsGridDescription) => {
+        if (!playerDeploymentHistory || !opponentShotsHistory || !settingsShips || !settingsGridDescription) return;
+
+        const playerDeploymentsDescriptions = playerDeploymentHistory.map(({anchorCoords, angle, shipId}) => ({
+            anchorCoords,
+            angle,
+            length: settingsShips[shipId].length,
+        }));
+
+        const opponentShotsDescriptions = opponentShotsHistory.map(({coords}) => ({
+            coords,
+        }));
+
+        const {width, height} = settingsGridDescription;
+
+        return new GameGridMap(width, height, playerDeploymentsDescriptions, opponentShotsDescriptions);
+    }
+);
+
 export const selectScoreToWin = state => {
     const settingsShips = selectSettingsShips(state);
 
@@ -467,7 +501,7 @@ export const selectScoreToWin = state => {
 };
 
 export const selectPlayerScore = (state, playerId) => {
-    const shotsMap = selectPlayerShotsMap(state, playerId);
+    const shotsMap = selectPlayerShotsGridMap(state, playerId);
 
     if (!shotsMap) return;
 
@@ -484,33 +518,7 @@ export const selectPlayerScore = (state, playerId) => {
     return score;
 };
 
-export const selectPlayerGameMap = createSelector(
-    [
-        (state, playerId) => selectPlayerDeploymentHistory(state, playerId),
-        (state, playerId) => selectPlayerShotsHistory(state, selectPlayerOpponentId(state, playerId)),
-        selectSettingsShips,
-        selectSettingsGridDescription,
-    ],
-    (playerDeploymentHistory, opponentShotsHistory, settingsShips, gridDescription) => {
-        if (!playerDeploymentHistory || !opponentShotsHistory || !settingsShips || !gridDescription) return;
-
-        const playerDeploymentsDescriptions = playerDeploymentHistory.map(({anchorCoords, angle, shipId}) => ({
-            anchorCoords,
-            angle,
-            length: settingsShips[shipId].length,
-        }));
-
-        const opponentShotsDescriptions = opponentShotsHistory.map(({coords}) => ({
-            coords,
-        }));
-
-        const {width: mapWidth, height: mapHeight} = gridDescription;
-
-        return new GameMap(mapWidth, mapHeight, playerDeploymentsDescriptions, opponentShotsDescriptions);
-    }
-);
-
-// *** SUPPLEMENTS ***
+// *** supplements ***
 
 class GridMap extends Array {
     constructor(width, height, cellInitValues = {}) {
@@ -550,50 +558,34 @@ class GridMap extends Array {
         return this.length - 1;
     }
 
-    getContinuousCellsSequence(cellProps, direction) {
+    getContinuousCellsSequence(cellProps, alongXAxis) {
         const allContinuousSequences = [];
 
         const {lastYCoord, lastXCoord} = this;
 
-        /*
-            picking continuous cells sequences that lie in map rows (horizontal direction)
-            or in columns (vertical direction);
-            iterate first over Y coordinates for checking rows
-            or over X coordinates for checking columns respectively
-        */
-
         let continuousSequence = [];
-        let firstLoopLastCoord, secondLoopLastCoord;
 
-        switch (direction) {
-            case HORIZONTAL:
-                firstLoopLastCoord = lastYCoord;
-                secondLoopLastCoord = lastXCoord;
+        let perpendicularAxisLastCoord, alongAxisLastCoord;
 
-                break;
-            case VERTICAL:
-                firstLoopLastCoord = lastXCoord;
-                secondLoopLastCoord = lastYCoord;
-
-                break;
+        if (alongXAxis) {
+            perpendicularAxisLastCoord = lastYCoord;
+            alongAxisLastCoord = lastXCoord;
+        } else {
+            perpendicularAxisLastCoord = lastXCoord;
+            alongAxisLastCoord = lastYCoord;
         }
 
-        for (let firstLoopCoord = 0; firstLoopCoord <= firstLoopLastCoord; firstLoopCoord++) {
-            for (let secondLoopCoord = 0; secondLoopCoord <= secondLoopLastCoord; secondLoopCoord++) {
+        for (let perpendicularAxisCoord = 0; perpendicularAxisCoord <= perpendicularAxisLastCoord; perpendicularAxisCoord++) {
+            for (let alongAxisCoord = 0; alongAxisCoord <= alongAxisLastCoord; alongAxisCoord++) {
 
                 let xCoord, yCoord;
 
-                switch (direction) {
-                    case HORIZONTAL:
-                        xCoord = secondLoopCoord;
-                        yCoord = firstLoopCoord;
-
-                        break;
-                    case VERTICAL:
-                        xCoord = firstLoopCoord;
-                        yCoord = secondLoopCoord;
-
-                        break;
+                if (alongXAxis) {
+                    xCoord = alongAxisCoord;
+                    yCoord = perpendicularAxisCoord;
+                } else {
+                    xCoord = perpendicularAxisCoord;
+                    yCoord = alongAxisCoord;
                 }
 
                 if (
@@ -621,13 +613,11 @@ class GridMap extends Array {
         return allContinuousSequences;
     }
 
-    isMapAreaContaining(cellProps, fromCellCoords, toCellCoords) {
-        if (fromCellCoords.x === toCellCoords.x && fromCellCoords.y === toCellCoords.y) return;
-
-        const fromXCoord = Math.min(fromCellCoords.x, toCellCoords.x);
-        const toXCoord = Math.max(fromCellCoords.x, toCellCoords.x);
-        const fromYCoord = Math.min(fromCellCoords.y, toCellCoords.y);
-        const toYCoord = Math.max(fromCellCoords.y, toCellCoords.y);
+    isAreaContaining(cellProps, areaFromCoords, areaToCoords) {
+        const fromXCoord = Math.min(areaFromCoords.x, areaToCoords.x);
+        const toXCoord = Math.max(areaFromCoords.x, areaToCoords.x);
+        const fromYCoord = Math.min(areaFromCoords.y, areaToCoords.y);
+        const toYCoord = Math.max(areaFromCoords.y, areaToCoords.y);
 
         const {lastXCoord, lastYCoord} = this;
 
@@ -642,12 +632,17 @@ class GridMap extends Array {
                         .every(([key, value]) => this[yCoord][xCoord][key] === value)
                 ) {
                     isContaining = true;
+
                     break loopOverAreaYCoord;
                 }
             }
         }
 
         return isContaining;
+    }
+
+    static get [Symbol.species]() {
+        return Array;
     }
 
     static addDeployments(gridMap, deploymentsDescriptions) {
@@ -664,11 +659,16 @@ class GridMap extends Array {
             const xAxisFactor = Math.round(Math.sin(deploymentAngle * Math.PI));
             const yAxisFactor = Math.round(Math.cos(deploymentAngle * Math.PI));
 
-            const xAxisOffset = (shipLength - 1) * xAxisFactor;
-            const yAxisOffset = (shipLength - 1) * yAxisFactor;
+            const xAxisShipLengthOffset = (shipLength - 1) * xAxisFactor;
+            const yAxisShipLengthOffset = (shipLength - 1) * yAxisFactor;
 
-            for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + yAxisOffset; yCoord++) {
-                for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + xAxisOffset; xCoord++) {
+            const fromXCoord = Math.min(anchorXCoord, anchorXCoord + xAxisShipLengthOffset);
+            const toXCoord = Math.max(anchorXCoord, anchorXCoord + xAxisShipLengthOffset);
+            const fromYCoord = Math.min(anchorYCoord, anchorYCoord + yAxisShipLengthOffset);
+            const toYCoord = Math.max(anchorYCoord, anchorYCoord + yAxisShipLengthOffset);
+
+            for (let yCoord = fromYCoord; yCoord <= toYCoord; yCoord++) {
+                for (let xCoord = fromXCoord; xCoord <= toXCoord; xCoord++) {
                     gridMap[yCoord][xCoord].isOccupied = true;
                 }
             }
@@ -689,7 +689,7 @@ class GridMap extends Array {
     }
 }
 
-class DeploymentMap extends GridMap {
+class DeploymentGridMap extends GridMap {
     constructor(width, height, deploymentsDescriptions) {
         super(width, height, {isOccupied: false, isUndeployable: false});
 
@@ -714,28 +714,78 @@ class DeploymentMap extends GridMap {
             const xAxisFactor = Math.round(Math.sin(deploymentAngle * Math.PI));
             const yAxisFactor = Math.round(Math.cos(deploymentAngle * Math.PI));
 
-            const xAxisOffset = (shipLength - 1) * xAxisFactor;
-            const yAxisOffset = (shipLength - 1) * yAxisFactor;
+            const xAxisShipLengthOffset = (shipLength - 1) * xAxisFactor;
+            const yAxisShipLengthOffset = (shipLength - 1) * yAxisFactor;
 
-            const fromXCoord = anchorXCoord === 0 ? 0 : anchorXCoord - 1;
-            const toXCoord = anchorXCoord + xAxisOffset + 1 > lastXCoord ? lastXCoord : anchorXCoord + xAxisOffset + 1;
+            // minimal (if in absolute values) axis offsets
+            const [minXAxisOffset, minYAxisOffset] = [
+                {
+                    anchorAxisCoord: anchorXCoord,
+                    axisFactor: xAxisFactor,
+                    lastAxisCoord: lastXCoord,
+                },
+                {
+                    anchorAxisCoord: anchorYCoord,
+                    axisFactor: yAxisFactor,
+                    lastAxisCoord: lastYCoord
+                }
+            ].map(({anchorAxisCoord, axisFactor, lastAxisCoord}) => (
+                axisFactor ?
+                    (
+                        anchorAxisCoord - axisFactor < 0 || anchorAxisCoord - axisFactor > lastAxisCoord ?
+                            0 : -axisFactor
+                    ) :
+                    (
+                        anchorAxisCoord === 0 ? 0 : -1
+                    )
+            ));
 
-            const fromYCoord = anchorYCoord === 0 ? 0 : anchorYCoord - 1;
-            const toYCoord = anchorYCoord + yAxisOffset + 1 > lastYCoord ? lastYCoord : anchorYCoord + yAxisOffset + 1;
+            // maximum (if in absolute values) axis offsets
+            const [maxXAxisOffset, maxYAxisOffset] = [
+                {
+                    anchorAxisCoord: anchorXCoord,
+                    axisShipLengthOffset: xAxisShipLengthOffset,
+                    axisFactor: xAxisFactor,
+                    lastAxisCoord: lastXCoord,
+                },
+                {
+                    anchorAxisCoord: anchorYCoord,
+                    axisShipLengthOffset: yAxisShipLengthOffset,
+                    axisFactor: yAxisFactor,
+                    lastAxisCoord: lastYCoord
+                }
+            ].map(({anchorAxisCoord, axisShipLengthOffset, axisFactor, lastAxisCoord}) => (
+                axisFactor ?
+                    (
+                        (
+                            anchorAxisCoord + axisShipLengthOffset + axisFactor < 0 ||
+                            anchorAxisCoord + axisShipLengthOffset + axisFactor > lastAxisCoord
+                        ) ?
+                            axisShipLengthOffset : axisShipLengthOffset + axisFactor
+                    ) :
+                    (
+                        anchorAxisCoord === lastAxisCoord ? 0 : 1
+                    )
+            ));
+
+            const fromXCoord = anchorXCoord + Math.min(minXAxisOffset, maxXAxisOffset);
+            const toXCoord = anchorXCoord + Math.max(minXAxisOffset, maxXAxisOffset);
+            const fromYCoord = anchorYCoord + Math.min(minYAxisOffset, maxYAxisOffset);
+            const toYCoord = anchorYCoord + Math.max(minYAxisOffset, maxYAxisOffset);
 
             for (let yCoord = fromYCoord; yCoord <= toYCoord; yCoord++) {
                 for (let xCoord = fromXCoord; xCoord <= toXCoord; xCoord++) {
-                    if (deploymentMap[yCoord][xCoord].isUndeployable) continue;
+                    if (this[yCoord][xCoord].isUndeployable) continue;
 
-                    deploymentMap[yCoord][xCoord].isUndeployable = true;
+                    this[yCoord][xCoord].isUndeployable = true;
                 }
             }
         });
     }
 }
 
-class ShotsMap extends GridMap {
-    constructor(width, height, playerShotsDescriptions, opponentDeploymentMap) {
+class ShotsGridMap extends GridMap {
+    constructor(width, height, playerShotsDescriptions, opponentDeploymentGridMap) {
         super(width, height, {isShooted: false});
 
         this.constructor.addShots(this, playerShotsDescriptions);
@@ -748,12 +798,12 @@ class ShotsMap extends GridMap {
                 },
             } = description;
 
-            if (opponentDeploymentMap[shotYCoord][shotXCoord].isOccupied) this[shotYCoord][shotXCoord].isShotSuccessful = true;
+            if (opponentDeploymentGridMap[shotYCoord][shotXCoord].isOccupied) this[shotYCoord][shotXCoord].isShotSuccessful = true;
         });
     }
 }
 
-class GameMap extends GridMap {
+class GameGridMap extends GridMap {
     constructor(width, height, playerDeploymentsDescriptions, opponentShotsDescriptions) {
         super(width, height, {isOccupied: false, isShooted: false});
 

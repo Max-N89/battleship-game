@@ -1,81 +1,62 @@
-import {DIRECTIONS} from "../../constants";
 import {GameError} from "../../custom-errors";
 
-const {DEFAULT_MESSAGES: DEFAULT_ERROR_MESSAGES} = GameError;
-
-function validateGameDeploy(action, deploymentMap, settingsShips) {
+function validateGameDeploy(action, deploymentGridMap, settingsShips) {
     const {
         anchorCoords: {
             x: anchorXCoord,
             y: anchorYCoord,
         },
-        direction: deploymentDirection,
+        angle: deploymentAngle,
         shipId,
-    } = action.payload.deploymentDescription;
+    } = action.payload.deploymentHistoryRecord;
 
     const shipLength = settingsShips[shipId].length
 
-    const {lastXCoord, lastYCoord} = deploymentMap;
+    const {lastXCoord, lastYCoord} = deploymentGridMap;
 
-    const isDeploymentHorizontal = deploymentDirection === DIRECTIONS.HORIZONTAL;
-    const isDeploymentVertical = deploymentDirection === DIRECTIONS.VERTICAL;
+    const xAxisFactor = Math.round(Math.sin(deploymentAngle * Math.PI));
+    const yAxisFactor = Math.round(Math.cos(deploymentAngle * Math.PI));
+
+    const xAxisShipLengthOffset = (shipLength - 1) * xAxisFactor;
+    const yAxisShipLengthOffset = (shipLength - 1) * yAxisFactor;
 
     let errorMessage;
 
     const errorCause = {
         action,
-        deploymentMap,
+        deploymentGridMap,
     };
 
     // check for anchor coordinates are in range between (0, 0) and (lastXCoord, lastYCoord)
-    {
-        if (anchorXCoord < 0 || anchorXCoord > lastXCoord || anchorYCoord < 0 || anchorYCoord > lastYCoord) {
-            errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_OUTSIDE;
+    if (anchorXCoord < 0 || anchorXCoord > lastXCoord || anchorYCoord < 0 || anchorYCoord > lastYCoord) {
+        errorMessage = "Deployment anchor is out of game grid.";
 
-            throw new GameError(errorMessage, errorCause);
-        }
+        throw new GameError(errorMessage, errorCause);
     }
 
-    // check if a ship is fitting into a grid
-    {
-        if (
-            isDeploymentHorizontal &&
-            anchorXCoord + shipLength - 1 > lastXCoord ||
-            isDeploymentVertical &&
-            anchorYCoord + shipLength - 1 > lastYCoord
-        ) {
-            errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.DOES_N0T_FIT;
+    // check if a ship deployment is fitting into the game grid
+    if (
+        xAxisFactor &&
+        (anchorXCoord + xAxisShipLengthOffset < 0 || anchorXCoord + xAxisShipLengthOffset > lastXCoord) ||
+        yAxisFactor &&
+        (anchorYCoord + yAxisShipLengthOffset < 0 || anchorYCoord + yAxisShipLengthOffset > lastYCoord)
+    ) {
+        errorMessage = "Deployment doesn't fit into game grid.";
 
-            throw new GameError(errorMessage, errorCause);
-        }
+        throw new GameError(errorMessage, errorCause);
     }
 
-    // check for undeployable cells
-    {
-        switch (deploymentDirection) {
-            case (DIRECTIONS.HORIZONTAL): {
-                for (let xCoord = anchorXCoord; xCoord <= anchorXCoord + shipLength - 1; xCoord++) {
-                    if (deploymentMap[anchorYCoord][xCoord].isUndeployable) {
-                        errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_BLOCKED;
+    // check if cells for deployment are undeployable
+    if (
+        deploymentGridMap.isAreaContaining(
+            {isUndeployable: true},
+            {x: anchorXCoord, y: anchorYCoord},
+            {x: anchorXCoord + xAxisShipLengthOffset, y: anchorYCoord + yAxisShipLengthOffset}
+        )
+    ) {
+        errorMessage = "Deployment is blocked by one of the previous ones.";
 
-                        throw new GameError(errorMessage, errorCause);
-                    }
-                }
-
-                break;
-            }
-            case (DIRECTIONS.VERTICAL): {
-                for (let yCoord = anchorYCoord; yCoord <= anchorYCoord + shipLength - 1; yCoord++) {
-                    if (deploymentMap[yCoord][anchorXCoord].isUndeployable) {
-                        errorMessage = DEFAULT_ERROR_MESSAGES.DEPLOYMENT.IS_BLOCKED;
-
-                        throw new GameError(errorMessage, errorCause);
-                    }
-                }
-
-                break;
-            }
-        }
+        throw new GameError(errorMessage, errorCause);
     }
 }
 
