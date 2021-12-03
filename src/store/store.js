@@ -5,19 +5,19 @@ import gameDeployMiddleware from "./supplements/game-deploy-middleware";
 import gameShootMiddleware from "./supplements/game-shoot-middleware";
 
 
-// *** PRELOADED STATE ***
+// *** preloaded state ***
 
-const persistedGameString = localStorage.getItem("game");
+const persistedGameSessionString = localStorage.getItem("gameSession");
 
 let preloadedState;
 
-if (persistedGameString) {
+if (persistedGameSessionString) {
     preloadedState = {
-        game: JSON.parse(persistedGameString),
+        game: JSON.parse(persistedGameSessionString),
     };
 }
 
-// *** MIDDLEWARE ***
+// *** middleware ***
 
 const middleware = getDefaultMiddleware => ([
     ...getDefaultMiddleware(),
@@ -25,7 +25,7 @@ const middleware = getDefaultMiddleware => ([
     gameShootMiddleware,
 ]);
 
-// *** STORE ***
+// *** store ***
 
 const store = configureStore({
     reducer: {
