@@ -1,43 +1,55 @@
-import React, {Component, Fragment} from "react";
+import React, {Component} from "react";
 
 import Header from "./generic/header";
 import Footer from "./generic/footer";
-
-import Home from "./home/home";
+import GameMenu from "./generic/game-menu";
+import SplashScreen from "./splash-screen/splash-screen";
 import Game from "./game/game";
 
-import {GAME_STATUSES} from "../constants";
-
-export default class App extends Component {
+class App extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            gameStatus: GAME_STATUSES.IDLE
+            isGameOpen: false
         };
 
-        this.onClickStartButtonHandler = this.onClickStartButtonHandler.bind(this);
+        this.gameOpenHandler = this.gameOpenHandler.bind(this);
+        this.gameCloseHandler = this.gameCloseHandler.bind(this);
     }
 
-    onClickStartButtonHandler() {
+    gameOpenHandler() {
         this.setState({
-            gameStatus: GAME_STATUSES.IN_PROGRESS
+            isGameOpen: true
+        });
+    }
+
+    gameCloseHandler() {
+        this.setState({
+            isGameOpen: false
         });
     }
 
     render() {
-        const {gameStatus} = this.state;
+        const {isGameOpen} = this.state;
 
         return (
-            <Fragment>
+            <>
                 <Header/>
-                {
-                    gameStatus === GAME_STATUSES.IDLE ?
-                        <Home onClickStartButton={this.onClickStartButtonHandler}/> :
-                        <Game/>
-                }
+                <GameMenu
+                    isGameOpen={isGameOpen}
+                    onGameOpen={this.gameOpenHandler}
+                    onGameClose={this.gameCloseHandler}
+                />
+                <main>
+                    {
+                        isGameOpen ? <Game/> : <SplashScreen/>
+                    }
+                </main>
                 <Footer/>
-            </Fragment>
+            </>
         );
     }
-};
+}
+
+export default App;
