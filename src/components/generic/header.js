@@ -1,9 +1,11 @@
 import React from "react";
 
-export default function Header() {
+function Header() {
     return (
         <header>
-            <h1>BATTLESHIP GAME</h1>
+            <h1>Battleship Game</h1>
         </header>
     );
-};
+}
+
+export default Header;
