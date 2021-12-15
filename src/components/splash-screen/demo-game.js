@@ -35,14 +35,14 @@ class DemoGame extends Component {
 
     render() {
         const {
-            playerOneGameMap,
-            playerTwoGameMap,
+            playerOneGameGridMap,
+            playerTwoGameGridMap,
         } = this.props;
 
         return (
             <div>
-                <GameGrid gridMap={playerOneGameMap}/>
-                <GameGrid gridMap={playerTwoGameMap}/>
+                <GameGrid gridMap={playerOneGameGridMap}/>
+                <GameGrid gridMap={playerTwoGameGridMap}/>
             </div>
         );
     }
