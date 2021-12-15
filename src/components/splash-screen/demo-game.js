@@ -2,6 +2,8 @@ import React, {Component} from "react";
 
 import GameGrid from "../generic/game-grid";
 
+const DEMO_GAME_SESSION = "demoGameSession";
+
 class DemoGame extends Component {
     constructor(props) {
         super(props);
@@ -23,14 +25,20 @@ class DemoGame extends Component {
     }
 
     componentWillUnmount() {
-        const {isGameOngoing, onGameReset} = this.props;
+        const {game, isGameOngoing, onGameReset} = this.props;
 
         if (this.moveTimerId) {
             clearInterval(this.moveTimerId);
             this.moveTimerId = null;
         }
 
-        if (isGameOngoing) onGameReset();
+        if (isGameOngoing) {
+            const persistedDemoGameSessionString = JSON.stringify(game);
+
+            sessionStorage.setItem(DEMO_GAME_SESSION, persistedDemoGameSessionString);
+
+            onGameReset();
+        }
     }
 
     render() {
