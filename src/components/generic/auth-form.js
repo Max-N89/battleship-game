@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function GameMenu() {
+export default function AuthForm() {
     return (
         <form>
 

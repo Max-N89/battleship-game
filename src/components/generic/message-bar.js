@@ -1,9 +1,13 @@
 import React from "react";
 
-export default function MessageBar() {
-    return (
-        <div>
+function MessageBar(props) {
+    const {message} = props;
 
-        </div>
+    return (
+        <p>
+            {message}
+        </p>
     );
-};
+}
+
+export default MessageBar;

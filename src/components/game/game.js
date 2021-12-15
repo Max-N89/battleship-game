@@ -1,6 +1,7 @@
 import React, {Component, Fragment} from "react";
 
 import GameGrid from "../generic/game-grid";
+
 import ScoreBar from "./score-bar";
 import DeploymentMenu from "./deployment-menu";
 import GameMenu from "./game-menu";
