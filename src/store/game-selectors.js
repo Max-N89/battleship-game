@@ -2,28 +2,32 @@ import {createSelector} from "@reduxjs/toolkit";
 
 import {GameError} from "../custom-errors";
 
+export const selectGame = state => (
+    state.game
+);
+
 export const selectErrors = state => (
-    state.game?.errors
+    selectGame(state)?.errors
 );
 
 export const selectSettingsGridDescription = state => (
-    state.game?.settings?.gridDescription
+    selectGame(state)?.settings?.gridDescription
 );
 /*
 export const selectSettingsShipsIds = state => (
-    state.game?.settings?.ships?.ids
+    selectGame(state)?.settings?.ships?.ids
 );
 */
 export const selectSettingsShips = state => (
-    state.game?.settings?.ships?.entities
+    selectGame(state)?.settings?.ships?.entities
 );
 
 export const selectPlayersIds = state => (
-    state.game?.players?.ids
+    selectGame(state)?.players?.ids
 );
 
 export const selectPlayers = state => (
-    state.game?.players?.entities
+    selectGame(state)?.players?.entities
 );
 
 export const selectPlayerEntity = (state, playerId) => (
@@ -518,7 +522,7 @@ export const selectPlayerScore = (state, playerId) => {
     return score;
 };
 
-export const selectIsGameOngoing = (state) => (
+export const selectIsGameOngoing = state => (
     Object.values(selectPlayers(state)).some(playerEntity => playerEntity.deploymentHistory.length)
 );
 
