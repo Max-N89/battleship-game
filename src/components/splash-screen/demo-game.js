@@ -2,7 +2,7 @@ import React, {Component} from "react";
 
 import GameGrid from "../generic/game-grid";
 
-export default class DemoGame extends Component {
+class DemoGame extends Component {
     constructor(props) {
         super(props);
 
@@ -21,7 +21,7 @@ export default class DemoGame extends Component {
     }
 
     componentWillUnmount() {
-        clearInterval(this.moveTimerId);
+        if (this.moveTimerId) clearInterval(this.moveTimerId);
     }
 
     render() {
@@ -37,4 +37,6 @@ export default class DemoGame extends Component {
             </div>
         );
     }
-};
+}
+
+export default DemoGame;

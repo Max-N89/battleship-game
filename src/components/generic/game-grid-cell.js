@@ -5,10 +5,8 @@ import squareBlackSrc from "../../../assets/game-grid-cells/square-black.svg";
 import starSkullSrc from "../../../assets/game-grid-cells/star-skull.svg";
 import splashSrc from "../../../assets/game-grid-cells/splash.svg";
 
-export default function GameGridCell(props) {
+function GameGridCell(props) {
     const {
-        xCoord,
-        yCoord,
         isOccupied,
         isShooted,
     } = props;
@@ -37,4 +35,6 @@ export default function GameGridCell(props) {
             src={imgSrc}
         />
     );
-};
+}
+
+export default GameGridCell;
