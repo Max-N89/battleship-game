@@ -1,10 +1,9 @@
-import React, {Component, Fragment} from "react";
+import React, {Component} from "react";
 
+import GameMenu from "../generic/game-menu";
 import GameGrid from "../generic/game-grid";
-
 import ScoreBar from "./score-bar";
 import DeploymentMenu from "./deployment-menu";
-import GameMenu from "./game-menu";
 
 export default class Game extends Component {
     constructor(props) {
@@ -13,14 +12,14 @@ export default class Game extends Component {
 
     render() {
         return (
-            <main>
+            <div>
                 {/*<ScoreBar/>*/}
                 {/*<ScoreBar/>*/}
                 {/*<GameGrid/>*/}
                 {/*<DeploymentMenu/>*/}
                 {/*<GameGrid/>*/}
                 {/*<GameMenu/>*/}
-            </main>
+            </div>
         );
     }
 };
