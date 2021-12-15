@@ -2,7 +2,13 @@ import React, {Component} from "react";
 import {connect} from "react-redux";
 
 import {gameAutoMove, gameReset} from "../../store/slices/game";
-import {selectIsGameOngoing, selectPlayerGameGridMap, selectPlayersIds} from "../../store/game-selectors";
+
+import {
+    selectIsGameOngoing,
+    selectPlayerGameGridMap,
+    selectPlayersIds,
+    selectGame,
+} from "../../store/game-selectors";
 
 import GameGrid from "../generic/game-grid";
 
@@ -62,9 +68,10 @@ class DemoGame extends Component {
 
 export default connect(
     state => ({
+        game: selectGame(state),
         isGameOngoing: selectIsGameOngoing(state),
         playerOneGameGridMap: selectPlayerGameGridMap(state, selectPlayersIds(state)[0]),
-        playerTwoGameGridMap: selectPlayerGameGridMap(state, selectPlayersIds(state)[1])
+        playerTwoGameGridMap: selectPlayerGameGridMap(state, selectPlayersIds(state)[1]),
     }),
     {
         onGameReset: gameReset,
