@@ -13,23 +13,37 @@ class DemoGame extends Component {
         };
 
         this.moveTimerId = null;
+
+        this.saveDemoGameSession = this.saveDemoGameSession.bind(this);
+    }
+
+    saveDemoGameSession() {
+        const {game} = this.props;
+
+        const persistedDemoGameSessionString = JSON.stringify(game);
+
+        sessionStorage.setItem(DEMO_GAME_SESSION, persistedDemoGameSessionString);
     }
 
     componentDidMount() {
         const {moveDelay} = this.state;
-        const {makeMove, isGameOngoing, onGameReset, onGameContinue} = this.props;
-
-        if (isGameOngoing) onGameReset();
+        const {isGameOngoing, makeMove, onGameReset, onGameContinue} = this.props;
 
         let persistedDemoGameSessionString = sessionStorage.getItem(DEMO_GAME_SESSION);
 
-        if (persistedDemoGameSessionString) onGameContinue(JSON.parse(persistedDemoGameSessionString));
+        if (persistedDemoGameSessionString) {
+            onGameContinue(JSON.parse(persistedDemoGameSessionString));
+        } else if (isGameOngoing) {
+            onGameReset();
+        }
 
         this.moveTimerId = setInterval(makeMove, moveDelay);
+
+        window.addEventListener("unload", this.saveDemoGameSession);
     }
 
     componentWillUnmount() {
-        const {game, isGameOngoing, onGameReset} = this.props;
+        const {isGameOngoing, onGameReset} = this.props;
 
         if (this.moveTimerId) {
             clearInterval(this.moveTimerId);
@@ -37,12 +51,11 @@ class DemoGame extends Component {
         }
 
         if (isGameOngoing) {
-            const persistedDemoGameSessionString = JSON.stringify(game);
-
-            sessionStorage.setItem(DEMO_GAME_SESSION, persistedDemoGameSessionString);
-
+            this.saveDemoGameSession();
             onGameReset();
         }
+
+        window.removeEventListener("unload", this.saveDemoGameSession);
     }
 
     render() {
