@@ -15,13 +15,22 @@ class DemoGame extends Component {
 
     componentDidMount() {
         const {moveDelay} = this.state;
-        const {makeMove} = this.props;
+        const {makeMove, isGameOngoing, onGameReset} = this.props;
+
+        if (isGameOngoing) onGameReset();
 
         this.moveTimerId = setInterval(makeMove, moveDelay);
     }
 
     componentWillUnmount() {
-        if (this.moveTimerId) clearInterval(this.moveTimerId);
+        const {isGameOngoing, onGameReset} = this.props;
+
+        if (this.moveTimerId) {
+            clearInterval(this.moveTimerId);
+            this.moveTimerId = null;
+        }
+
+        if (isGameOngoing) onGameReset();
     }
 
     render() {
