@@ -48,18 +48,8 @@ const gameSlice = createSlice({
                 };
             }
         },
-        continue: {
-            reducer(state, action) {
-                state.players = action.payload;
-            },
-            prepare(players) {
-                return {
-                    payload: {
-                        ids: Object.keys(players),
-                        entities: players
-                    }
-                };
-            }
+        continue(state, action) {
+            return action.payload;
         },
         reset(state) {
             Object.values(state.players.entities).forEach(entity => {
