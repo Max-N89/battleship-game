@@ -17,9 +17,13 @@ class DemoGame extends Component {
 
     componentDidMount() {
         const {moveDelay} = this.state;
-        const {makeMove, isGameOngoing, onGameReset} = this.props;
+        const {makeMove, isGameOngoing, onGameReset, onGameContinue} = this.props;
 
         if (isGameOngoing) onGameReset();
+
+        let persistedDemoGameSessionString = sessionStorage.getItem(DEMO_GAME_SESSION);
+
+        if (persistedDemoGameSessionString) onGameContinue(JSON.parse(persistedDemoGameSessionString));
 
         this.moveTimerId = setInterval(makeMove, moveDelay);
     }
