@@ -1,4 +1,8 @@
 import React, {Component} from "react";
+import {connect} from "react-redux";
+
+import {gameContinue, gameReset} from "../../store/slices/game";
+import {selectIsGameOngoing, selectPlayers} from "../../store/game-selectors";
 
 const PREV_GAME_SESSION_PLAYERS = "prevGameSessionPlayers";
 
@@ -87,4 +91,13 @@ class GameMenu extends Component {
     }
 }
 
-export default GameMenu;
+export default connect(
+    state => ({
+        isGameOngoing: selectIsGameOngoing(state),
+        players: selectPlayers(state),
+    }),
+    {
+        onGameContinue: gameContinue,
+        onGameReset: gameReset,
+    }
+)(GameMenu);

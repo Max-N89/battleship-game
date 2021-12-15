@@ -1,4 +1,8 @@
 import React, {Component} from "react";
+import {connect} from "react-redux";
+
+import {gameAutoMove, gameReset} from "../../store/slices/game";
+import {selectIsGameOngoing, selectPlayerGameGridMap, selectPlayersIds} from "../../store/game-selectors";
 
 import GameGrid from "../generic/game-grid";
 
@@ -35,17 +39,27 @@ class DemoGame extends Component {
 
     render() {
         const {
-            playerOneGameMap,
-            playerTwoGameMap,
+            playerOneGameGridMap,
+            playerTwoGameGridMap,
         } = this.props;
 
         return (
             <div>
-                <GameGrid gridMap={playerOneGameMap}/>
-                <GameGrid gridMap={playerTwoGameMap}/>
+                <GameGrid gridMap={playerOneGameGridMap}/>
+                <GameGrid gridMap={playerTwoGameGridMap}/>
             </div>
         );
     }
 }
 
-export default DemoGame;
+export default connect(
+    state => ({
+        isGameOngoing: selectIsGameOngoing(state),
+        playerOneGameGridMap: selectPlayerGameGridMap(state, selectPlayersIds(state)[0]),
+        playerTwoGameGridMap: selectPlayerGameGridMap(state, selectPlayersIds(state)[1])
+    }),
+    {
+        onGameReset: gameReset,
+        makeMove: gameAutoMove,
+    }
+)(DemoGame);
