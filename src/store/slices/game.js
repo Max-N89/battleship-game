@@ -48,6 +48,19 @@ const gameSlice = createSlice({
                 };
             }
         },
+        continue: {
+            reducer(state, action) {
+                state.players = action.payload;
+            },
+            prepare(players) {
+                return {
+                    payload: {
+                        ids: Object.keys(players),
+                        entities: players
+                    }
+                };
+            }
+        },
         reset(state) {
             Object.values(state.players.entities).forEach(entity => {
                 entity.deploymentHistory = [];
@@ -75,6 +88,7 @@ const gameSlice = createSlice({
 export const {
     deploy: gameDeploy,
     shoot: gameShoot,
+    continue: gameContinue,
     reset: gameReset,
     error: gameError,
 } = gameSlice.actions;

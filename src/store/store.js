@@ -7,13 +7,13 @@ import gameShootMiddleware from "./supplements/game-shoot-middleware";
 
 // *** preloaded state ***
 
-const persistedGameSessionString = localStorage.getItem("gameSession");
+const persistedDemoGameSessionString = sessionStorage.getItem("demoGameSession");
 
 let preloadedState;
 
-if (persistedGameSessionString) {
+if (persistedDemoGameSessionString) {
     preloadedState = {
-        game: JSON.parse(persistedGameSessionString),
+        game: JSON.parse(persistedDemoGameSessionString),
     };
 }
 
