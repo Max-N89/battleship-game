@@ -518,6 +518,10 @@ export const selectPlayerScore = (state, playerId) => {
     return score;
 };
 
+export const selectIsGameOngoing = (state) => (
+    Object.values(selectPlayers(state)).some(playerEntity => playerEntity.deploymentHistory.length)
+);
+
 // *** supplements ***
 
 class GridMap extends Array {
