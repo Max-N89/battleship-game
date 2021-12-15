@@ -4,7 +4,7 @@ import {connect} from "react-redux";
 import {gameContinue, gameReset} from "../../store/slices/game";
 import {selectIsGameOngoing, selectPlayers} from "../../store/game-selectors";
 
-const PREV_GAME_SESSION_PLAYERS = "prevGameSessionPlayers";
+const PREV_GAME_SESSION = "prevGameSession";
 
 class GameMenu extends Component {
     constructor(props) {
@@ -29,19 +29,19 @@ class GameMenu extends Component {
 
     onClickContinueButtonHandler() {
         const {onGameContinue, onGameOpen} = this.props;
-        const prevGameSessionPlayers = JSON.parse(localStorage.getItem(PREV_GAME_SESSION_PLAYERS));
+        const prevGameSession = JSON.parse(localStorage.getItem(PREV_GAME_SESSION));
 
-        onGameContinue(prevGameSessionPlayers);
+        onGameContinue(prevGameSession);
         onGameOpen();
     }
 
     onClickCloseButtonHandler() {
-        const {players, isGameOngoing, onGameReset, onGameClose} = this.props;
+        const {game, isGameOngoing, onGameReset, onGameClose} = this.props;
 
         if (isGameOngoing) {
-            const persistedPrevGameSessionPlayersString = JSON.stringify(players);
+            const persistedPrevGameSessionString = JSON.stringify(game);
 
-            localStorage.setItem(PREV_GAME_SESSION_PLAYERS, persistedPrevGameSessionPlayersString);
+            localStorage.setItem(PREV_GAME_SESSION, persistedPrevGameSessionString);
 
             this.setState({
                 isPrevGameSessionFinished: false
@@ -54,9 +54,9 @@ class GameMenu extends Component {
     }
 
     componentDidMount() {
-        const persistedPrevGameSessionPlayersString = localStorage.getItem(PREV_GAME_SESSION_PLAYERS);
+        const persistedPrevGameSessionString = localStorage.getItem(PREV_GAME_SESSION);
 
-        if (persistedPrevGameSessionPlayersString) {
+        if (persistedPrevGameSessionString) {
             this.setState({
                 isPrevGameSessionFinished: false
             });
