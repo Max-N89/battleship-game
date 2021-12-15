@@ -1,7 +1,7 @@
 import React, {Component} from "react";
 import {connect} from "react-redux";
 
-import {gameAutoMove, gameReset} from "../../store/slices/game";
+import {gameAutoMove, gameReset, gameContinue} from "../../store/slices/game";
 
 import {
     selectIsGameOngoing,
@@ -80,5 +80,6 @@ export default connect(
     {
         onGameReset: gameReset,
         makeMove: gameAutoMove,
+        onGameContinue: gameContinue,
     }
 )(DemoGame);
