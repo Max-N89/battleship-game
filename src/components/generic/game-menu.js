@@ -16,47 +16,43 @@ class GameMenu extends Component {
     }
 
     onClickStartButtonHandler() {
-        this.props.onGameReset();
-        this.props.onGameOpen();
+        const {isGameOngoing, onGameReset, onGameOpen} = this.props;
+
+        if (isGameOngoing) onGameReset();
+
+        onGameOpen();
     }
 
     onClickContinueButtonHandler() {
+        const {onGameContinue, onGameOpen} = this.props;
         const prevGameSessionPlayers = JSON.parse(localStorage.getItem(PREV_GAME_SESSION_PLAYERS));
 
-        this.props.onGameContinue(prevGameSessionPlayers);
-        this.props.onGameOpen();
+        onGameContinue(prevGameSessionPlayers);
+        onGameOpen();
     }
 
     onClickCloseButtonHandler() {
-        if (
-            Object.values(this.props.players).some(playerEntity => playerEntity.deploymentHistory.length)
-        ) {
-            const persistedPrevGameSessionPlayersString = JSON.stringify(this.props.players);
+        const {players, isGameOngoing, onGameReset, onGameClose} = this.props;
+
+        if (isGameOngoing) {
+            const persistedPrevGameSessionPlayersString = JSON.stringify(players);
 
             localStorage.setItem(PREV_GAME_SESSION_PLAYERS, persistedPrevGameSessionPlayersString);
 
             this.setState({
                 isPrevGameSessionFinished: false
             });
+
+            onGameReset();
         }
 
-        this.props.onGameReset();
-        this.props.onGameClose();
+        onGameClose();
     }
 
     componentDidMount() {
         const persistedPrevGameSessionPlayersString = localStorage.getItem(PREV_GAME_SESSION_PLAYERS);
 
-        let prevGameSessionPlayers;
-
         if (persistedPrevGameSessionPlayersString) {
-            prevGameSessionPlayers = JSON.parse(persistedPrevGameSessionPlayersString);
-        }
-
-        if (
-            prevGameSessionPlayers &&
-            Object.values(prevGameSessionPlayers).some(playerEntity => playerEntity.deploymentHistory.length)
-        ) {
             this.setState({
                 isPrevGameSessionFinished: false
             });
