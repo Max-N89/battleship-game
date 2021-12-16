@@ -3,11 +3,11 @@ import {createSelector} from "@reduxjs/toolkit";
 import {GameError} from "../custom-errors";
 
 export const selectCurrentSession = state => (
-    state.currentSession
+    state.game?.currentSession
 );
 
 export const selectPrevSavedSession = state => (
-    state.prevSavedSession
+    state.game?.prevSavedSession
 );
 
 export const selectErrors = state => (
