@@ -3,6 +3,8 @@ import {connect} from "react-redux";
 
 import {gameAutoMove, gameReset, gameContinue} from "../../store/slices/game";
 
+import "./demo-game.css";
+
 import {
     selectCurrentSession,
     selectPlayerGameGridMap,
@@ -18,7 +20,7 @@ class DemoGame extends Component {
         super(props);
 
         this.state = {
-            moveDelay: 2e2
+            moveDelay: 4e2
         };
 
         this.moveTimerId = null;
@@ -69,7 +71,7 @@ class DemoGame extends Component {
         } = this.props;
 
         return (
-            <div>
+            <div className="demo-game">
                 <GameGrid gridMap={playerOneGameGridMap}/>
                 <GameGrid gridMap={playerTwoGameGridMap}/>
             </div>

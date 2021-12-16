@@ -6,6 +6,8 @@ import GameMenu from "./generic/game-menu";
 import SplashScreen from "./splash-screen/splash-screen";
 import Game from "./game/game";
 
+import "./app.css";
+
 class App extends Component {
     constructor(props) {
         super(props);

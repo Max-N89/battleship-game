@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Bakbak+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+
+.app {
+    position: relative;
+    margin: 0 auto;
+    padding-top: 2vh;
+    padding-bottom: 30vh;
+    min-width: 70rem;
+    max-width: min-content;
+    min-height: 100vh;
+    font-family: 'Roboto', sans-serif;
+    font-size: 2rem;
+}
+
+.app h1,
+.app h2,
+.app h3 {
+    margin: 0;
+    font-family: 'Bakbak One', sans-serif;
+}
