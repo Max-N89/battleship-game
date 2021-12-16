@@ -7,8 +7,8 @@
     margin: 0 auto;
     padding-top: 2vh;
     padding-bottom: 30vh;
-    min-width: 70rem;
-    max-width: min-content;
+    min-width: 72rem;
+    max-width: max-content;
     min-height: 100vh;
     font-family: 'Roboto', sans-serif;
     font-size: 2rem;
