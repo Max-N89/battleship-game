@@ -4,10 +4,9 @@ import {connect} from "react-redux";
 import {gameAutoMove, gameReset, gameContinue} from "../../store/slices/game";
 
 import {
-    selectIsGameOngoing,
+    selectCurrentSession,
     selectPlayerGameGridMap,
     selectPlayersIds,
-    selectGame,
 } from "../../store/game-selectors";
 
 import GameGrid from "../generic/game-grid";
@@ -19,7 +18,7 @@ class DemoGame extends Component {
         super(props);
 
         this.state = {
-            moveDelay: 2e3
+            moveDelay: 2e2
         };
 
         this.moveTimerId = null;
@@ -28,22 +27,22 @@ class DemoGame extends Component {
     }
 
     saveDemoGameSession() {
-        const {game} = this.props;
+        const {gameSession} = this.props;
 
-        const persistedDemoGameSessionString = JSON.stringify(game);
+        const persistedDemoGameSessionString = JSON.stringify(gameSession);
 
         sessionStorage.setItem(DEMO_GAME_SESSION, persistedDemoGameSessionString);
     }
 
     componentDidMount() {
         const {moveDelay} = this.state;
-        const {isGameOngoing, makeMove, onGameReset, onGameContinue} = this.props;
+        const {makeMove, onGameReset, onGameContinue} = this.props;
 
         let persistedDemoGameSessionString = sessionStorage.getItem(DEMO_GAME_SESSION);
 
         if (persistedDemoGameSessionString) {
-            onGameContinue(JSON.parse(persistedDemoGameSessionString));
-        } else if (isGameOngoing) {
+            onGameContinue(persistedDemoGameSessionString);
+        } else {
             onGameReset();
         }
 
@@ -53,17 +52,12 @@ class DemoGame extends Component {
     }
 
     componentWillUnmount() {
-        const {isGameOngoing, onGameReset} = this.props;
-
         if (this.moveTimerId) {
             clearInterval(this.moveTimerId);
             this.moveTimerId = null;
         }
 
-        if (isGameOngoing) {
-            this.saveDemoGameSession();
-            onGameReset();
-        }
+        this.saveDemoGameSession();
 
         window.removeEventListener("unload", this.saveDemoGameSession);
     }
@@ -85,8 +79,7 @@ class DemoGame extends Component {
 
 export default connect(
     state => ({
-        game: selectGame(state),
-        isGameOngoing: selectIsGameOngoing(state),
+        gameSession: selectCurrentSession(state),
         playerOneGameGridMap: selectPlayerGameGridMap(state, selectPlayersIds(state)[0]),
         playerTwoGameGridMap: selectPlayerGameGridMap(state, selectPlayersIds(state)[1]),
     }),
