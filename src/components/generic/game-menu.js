@@ -1,7 +1,7 @@
 import React from "react";
 
 function GameMenu(props) {
-    const {isGameOpen, canContinePrev, onGameStartNew, onGameContinuePrev, onGameCloseCurrent} = props;
+    const {isGameOpen, canContinuePrev, onGameStartNew, onGameContinuePrev, onGameCloseCurrent} = props;
 
     return (
         <section>
@@ -9,7 +9,7 @@ function GameMenu(props) {
             <button onClick={onGameStartNew}>Start New</button>
             {
                 !isGameOpen &&
-                canContinePrev &&
+                canContinuePrev &&
                 <button onClick={onGameContinuePrev}>Continue Previous</button>
             }
             {
