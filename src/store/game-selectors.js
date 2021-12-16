@@ -6,6 +6,10 @@ export const selectCurrentSession = state => (
     state.currentSession
 );
 
+export const selectPrevSavedSession = state => (
+    state.prevSavedSession
+);
+
 export const selectErrors = state => (
     selectCurrentSession(state)?.errors
 );
@@ -522,7 +526,7 @@ export const selectPlayerScore = (state, playerId) => {
     return score;
 };
 
-export const selectIsGameOngoing = state => (
+export const selectIsCurrentSessionOngoing = state => (
     Object.values(selectPlayers(state)).some(playerEntity => playerEntity.deploymentHistory.length)
 );
 
