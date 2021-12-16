@@ -6,7 +6,11 @@ const config = {
     mode: "development",
     devtool: "eval-source-map",
     devServer: {
-        static: false,
+        // TODO: fix an issue with favicon display
+        static: {
+            directory: path.join(__dirname, "./assets/icons"),
+            publicPath: "/"
+        },
         client: {
             overlay: true,
         },
