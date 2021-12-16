@@ -11,39 +11,51 @@ class App extends Component {
         super(props);
 
         this.state = {
-            isGameOpen: false
+            isGameOpen: false,
+            isGameNew: false,
         };
 
-        this.gameOpenHandler = this.gameOpenHandler.bind(this);
-        this.gameCloseHandler = this.gameCloseHandler.bind(this);
+        this.gameStartNewHandler = this.gameStartNewHandler.bind(this);
+        this.gameContinuePrevHandler = this.gameContinuePrevHandler.bind(this);
+        this.gameCloseCurrentHandler = this.gameCloseCurrentHandler.bind(this);
     }
 
-    gameOpenHandler() {
+    gameStartNewHandler() {
         this.setState({
-            isGameOpen: true
+            isGameOpen: true,
+            isGameNew: true,
         });
     }
 
-    gameCloseHandler() {
+    gameContinuePrevHandler() {
         this.setState({
-            isGameOpen: false
+            isGameOpen: true,
+            isGameNew: false,
+        });
+    }
+
+    gameCloseCurrentHandler() {
+        this.setState({
+            isGameOpen: false,
         });
     }
 
     render() {
-        const {isGameOpen} = this.state;
+        const {isGameOpen, isGameNew} = this.state;
+        const {gameStartNewHandler, gameContinuePrevHandler, gameCloseCurrentHandler} = this;
 
         return (
             <>
                 <Header/>
                 <GameMenu
                     isGameOpen={isGameOpen}
-                    onGameOpen={this.gameOpenHandler}
-                    onGameClose={this.gameCloseHandler}
+                    onGameStartNew={gameStartNewHandler}
+                    onGameContinuePrev={gameContinuePrevHandler}
+                    onGameCloseCurrent={gameCloseCurrentHandler}
                 />
                 <main>
                     {
-                        isGameOpen ? <Game/> : <SplashScreen/>
+                        isGameOpen ? <Game isNew={isGameNew}/> : <SplashScreen/>
                     }
                 </main>
                 <Footer/>
