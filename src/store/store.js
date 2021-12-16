@@ -4,16 +4,15 @@ import gameSlice from "./slices/game";
 import gameDeployMiddleware from "./supplements/game-deploy-middleware";
 import gameShootMiddleware from "./supplements/game-shoot-middleware";
 
-
 // *** preloaded state ***
 
-const persistedDemoGameSessionString = sessionStorage.getItem("demoGameSession");
+const persistedGameString = localStorage.getItem("game");
 
 let preloadedState;
 
-if (persistedDemoGameSessionString) {
+if (persistedGameString) {
     preloadedState = {
-        game: JSON.parse(persistedDemoGameSessionString),
+        game: JSON.parse(persistedGameString),
     };
 }
 

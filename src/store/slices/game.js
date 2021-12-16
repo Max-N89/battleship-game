@@ -22,7 +22,7 @@ const gameSlice = createSlice({
             reducer(state, action) {
                 const {playerId, deploymentHistoryRecord} = action.payload;
 
-                state.players.entities[playerId].deploymentHistory.push(deploymentHistoryRecord);
+                state.currentSession.players.entities[playerId].deploymentHistory.push(deploymentHistoryRecord);
             },
             prepare(playerId, deploymentHistoryRecord) {
                 return {
@@ -37,7 +37,7 @@ const gameSlice = createSlice({
             reducer(state, action) {
                 const {playerId, shotsHistoryRecord} = action.payload;
 
-                state.players.entities[playerId].shotsHistory.push(shotsHistoryRecord);
+                state.currentSession.players.entities[playerId].shotsHistory.push(shotsHistoryRecord);
             },
             prepare(playerId, shotsHistoryRecord) {
                 return {
@@ -48,18 +48,9 @@ const gameSlice = createSlice({
                 };
             }
         },
-        continue(state, action) {
-            return action.payload;
-        },
-        reset(state) {
-            Object.values(state.players.entities).forEach(entity => {
-                entity.deploymentHistory = [];
-                entity.shotsHistory = [];
-            });
-        },
         error: {
             reducer(state, action) {
-                state.errors.push(action.payload);
+                state.currentSession.errors.push(action.payload);
             },
             prepare(error) {
                 const {message, cause} = error;
@@ -72,15 +63,32 @@ const gameSlice = createSlice({
                 };
             }
         },
+        reset(state) {
+            state.currentSession = createInitSession();
+        },
+        save(state) {
+            state.prevSavedSession = JSON.stringify(state.currentSession);
+        },
+        continue(state, action) {
+            state.currentSession = JSON.parse(action.payload);
+        },
+        restart(state) {
+            Object.values(state.currentSession.players.entities).forEach(entity => {
+                entity.deploymentHistory = [];
+                entity.shotsHistory = [];
+            });
+        },
     }
 });
 
 export const {
     deploy: gameDeploy,
     shoot: gameShoot,
-    continue: gameContinue,
-    reset: gameReset,
     error: gameError,
+    reset: gameReset,
+    save: gameSave,
+    continue: gameContinue,
+    restart: gameRestart,
 } = gameSlice.actions;
 
 export const gameAutoDeploy = playerId => (dispatch, getState) => {
@@ -222,26 +230,11 @@ export default gameSlice.reducer;
 // *** SUPPLEMENTS ***
 
 function createInitState() {
-    const initPlayersEntities = createInitPlayersEntities();
-    const shipsEntities = createShipsEntities();
+    const currentSession = createInitSession();
 
     return {
-        settings: {
-            gridDescription: {
-                // grid coordinates range is from (0, 0) to (width - 1, height - 1)
-                width: 10,
-                height: 10,
-            },
-            ships: {
-                ids: Object.keys(shipsEntities),
-                entities: shipsEntities,
-            },
-        },
-        players: {
-            ids: Object.keys(initPlayersEntities),
-            entities: initPlayersEntities,
-        },
-        errors: [],
+        currentSession,
+        prevSavedSession: null
     };
 }
 
@@ -281,6 +274,31 @@ function createInitPlayersEntities() {
 
         return acc;
     }, {});
+}
+
+function createInitSession() {
+    const initPlayersEntities = createInitPlayersEntities();
+    const shipsEntities = createShipsEntities();
+
+    return {
+        id: nanoid(),
+        settings: {
+            gridDescription: {
+                // grid coordinates range is from (0, 0) to (width - 1, height - 1)
+                width: 10,
+                height: 10,
+            },
+            ships: {
+                ids: Object.keys(shipsEntities),
+                entities: shipsEntities,
+            },
+        },
+        players: {
+            ids: Object.keys(initPlayersEntities),
+            entities: initPlayersEntities,
+        },
+        errors: [],
+    }
 }
 
 function getRandomInteger(min, max) {
