@@ -24,6 +24,7 @@ class DemoGame extends Component {
         this.moveTimerId = null;
 
         this.saveDemoGameSession = this.saveDemoGameSession.bind(this);
+        this.makeDemoGameMove = this.makeDemoGameMove.bind(this);
     }
 
     saveDemoGameSession() {
@@ -34,9 +35,20 @@ class DemoGame extends Component {
         sessionStorage.setItem(DEMO_GAME_SESSION, persistedDemoGameSessionString);
     }
 
+    makeDemoGameMove() {
+        const {gameErrors, onGameMove, onGameReset} = this.props;
+
+        if (gameErrors.length) {
+            onGameReset();
+        } else {
+            onGameMove();
+        }
+    }
+
     componentDidMount() {
         const {moveDelay} = this.state;
-        const {makeMove, onGameReset, onGameContinue} = this.props;
+        const {onGameReset, onGameContinue} = this.props;
+        const {makeDemoGameMove} = this;
 
         let persistedDemoGameSessionString = sessionStorage.getItem(DEMO_GAME_SESSION);
 
@@ -46,7 +58,7 @@ class DemoGame extends Component {
             onGameReset();
         }
 
-        this.moveTimerId = setInterval(makeMove, moveDelay);
+        this.moveTimerId = setInterval(makeDemoGameMove, moveDelay);
 
         window.addEventListener("unload", this.saveDemoGameSession);
     }
