@@ -5,10 +5,9 @@
 .app {
     position: relative;
     margin: 0 auto;
-    padding-top: 2vh;
-    padding-bottom: 30vh;
-    min-width: 72rem;
-    max-width: max-content;
+    padding: 4vh 0 30vh 0;
+    min-width: min-content;
+    max-width: 60vw;
     min-height: 100vh;
     font-family: 'Roboto', sans-serif;
     font-size: 2rem;

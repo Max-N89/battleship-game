@@ -5,7 +5,7 @@ import squareBlackSrc from "../../../assets/game-grid-cells/square-black.svg";
 import starSkullSrc from "../../../assets/game-grid-cells/star-skull.svg";
 import splashSrc from "../../../assets/game-grid-cells/splash.svg";
 
-import "./game-grid-cell.css"
+// import "./game-grid-cell.css"
 
 function GameGridCell(props) {
     const {

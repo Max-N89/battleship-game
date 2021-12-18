@@ -1,9 +1,11 @@
 .demo-game {
     display: flex;
     flex-direction: row;
+    column-gap: 3rem;
     align-items: center;
     justify-content: space-between;
-    margin-top: -20rem;
+    margin: -22rem 6rem 0 6rem;
+    padding: 3rem;
 }
 
 .demo-game .game-grid {
