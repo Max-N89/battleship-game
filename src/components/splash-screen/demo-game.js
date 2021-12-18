@@ -7,6 +7,7 @@ import {
     selectCurrentSession,
     selectPlayerGameGridMap,
     selectPlayersIds,
+    selectErrors,
 } from "../../store/game-selectors";
 
 import GameGrid from "../generic/game-grid";
@@ -92,12 +93,13 @@ class DemoGame extends Component {
 export default connect(
     state => ({
         gameSession: selectCurrentSession(state),
+        gameErrors: selectErrors(state),
         playerOneGameGridMap: selectPlayerGameGridMap(state, selectPlayersIds(state)[0]),
         playerTwoGameGridMap: selectPlayerGameGridMap(state, selectPlayersIds(state)[1]),
     }),
     {
         onGameReset: gameReset,
-        makeMove: gameAutoMove,
+        onGameMove: gameAutoMove,
         onGameContinue: gameContinue,
     }
 )(DemoGame);
