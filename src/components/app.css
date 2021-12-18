@@ -5,7 +5,7 @@
 .app {
     position: relative;
     margin: 0 auto;
-    padding: 4vh 0 30vh 0;
+    padding: 0 0 30vh 0;
     min-width: min-content;
     max-width: 60vw;
     min-height: 100vh;
