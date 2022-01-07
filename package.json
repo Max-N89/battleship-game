@@ -1,6 +1,6 @@
 {
   "name": "battleship-game",
-  "description": "A React game web application.",
+  "description": "A game web application built with React and related libraries.",
   "private": true,
   "scripts": {
     "dev": "webpack serve --open --config dev.webpack.config.babel.js"
