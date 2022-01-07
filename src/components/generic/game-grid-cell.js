@@ -5,6 +5,8 @@ import squareBlackSrc from "../../../assets/game-grid-cells/square-black.svg";
 import starSkullSrc from "../../../assets/game-grid-cells/star-skull.svg";
 import splashSrc from "../../../assets/game-grid-cells/splash.svg";
 
+// import "./game-grid-cell.css"
+
 function GameGridCell(props) {
     const {
         isOccupied,
@@ -31,6 +33,7 @@ function GameGridCell(props) {
 
     return (
         <img
+            className="game-grid-cell"
             alt={imgAlt}
             src={imgSrc}
         />

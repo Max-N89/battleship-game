@@ -1,0 +1,19 @@
+.app header {
+    position: sticky;
+    top: -2rem;
+    margin: 4vh;
+    width: calc(100% - 8vh);
+}
+
+.app header h1 {
+    display: inline-block;
+    border: 4px solid #323232;
+    border-radius: 2rem;
+    padding: 0 8rem;
+    width: 100%;
+    color: #960000;
+    background-color: white;
+    font-size: 8rem;
+    text-align: center;
+    text-transform: uppercase;
+}

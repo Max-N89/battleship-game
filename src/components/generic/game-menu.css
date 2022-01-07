@@ -1,0 +1,29 @@
+.game-menu-wrapper {
+    position: sticky;
+    top: 8rem;
+    margin-top: 14rem;
+    width: 100%;
+}
+
+.game-menu {
+    margin: 0 auto;
+    border: 2px solid #323232;
+    border-radius: 2rem;
+    padding: 1rem;
+    width: 25rem;
+    background-color: white;
+}
+
+.game-menu h2 {
+    font-size: 3rem;
+    line-height: 1;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.game-menu button {
+    margin-top: 1rem;
+    border-radius: 1rem;
+    width: 100%;
+    text-transform: uppercase;
+}
