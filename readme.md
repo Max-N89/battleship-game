@@ -1,8 +1,8 @@
 # Battleship game
 
-A game web application based on the
+A pet project of game web application based on the
  [classic game](https://en.wikipedia.org/wiki/Battleship_(game)) of the same name
- built with [React](https://reactjs.org/) and related libraries.
+  built with [React](https://reactjs.org/) and related libraries.
 
 ## Requirements
 
