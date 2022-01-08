@@ -227,7 +227,7 @@ export const gameAutoMove = () => (dispatch, getState) => {
 
 export default gameSlice.reducer;
 
-// *** SUPPLEMENTS ***
+// *** supplements ***
 
 function createInitState() {
     const currentSession = createInitSession();
