@@ -1,6 +1,6 @@
 import {configureStore} from "@reduxjs/toolkit";
 
-import gameSlice from "./slices/game";
+import gameSliceReducer from "./slices/game";
 import gameDeployMiddleware from "./supplements/game-deploy-middleware";
 import gameShootMiddleware from "./supplements/game-shoot-middleware";
 
@@ -28,7 +28,7 @@ const middleware = getDefaultMiddleware => ([
 
 const store = configureStore({
     reducer: {
-        game: gameSlice,
+        game: gameSliceReducer,
     },
     preloadedState,
     middleware,
