@@ -533,6 +533,8 @@ export const selectIsCurrentSessionOngoing = state => (
 // *** supplements ***
 
 class GridMap extends Array {
+    [Symbol.toStringTag] = "GridMap";
+
     constructor(width, height, cellInitValues = {}) {
         super();
 
@@ -702,6 +704,8 @@ class GridMap extends Array {
 }
 
 class DeploymentGridMap extends GridMap {
+    [Symbol.toStringTag] = "DeploymentGridMap";
+
     constructor(width, height, deploymentsDescriptions) {
         super(width, height, {isOccupied: false, isUndeployable: false});
 
@@ -797,6 +801,8 @@ class DeploymentGridMap extends GridMap {
 }
 
 class ShotsGridMap extends GridMap {
+    [Symbol.toStringTag] = "ShotsGridMap";
+
     constructor(width, height, playerShotsDescriptions, opponentDeploymentGridMap) {
         super(width, height, {isShooted: false});
 
@@ -816,6 +822,8 @@ class ShotsGridMap extends GridMap {
 }
 
 class GameGridMap extends GridMap {
+    [Symbol.toStringTag] = "GameGridMap";
+
     constructor(width, height, playerDeploymentsDescriptions, opponentShotsDescriptions) {
         super(width, height, {isOccupied: false, isShooted: false});
 
