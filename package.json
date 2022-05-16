@@ -1,20 +1,20 @@
 {
-  "name": "battleship-game",
-  "description": "A game web application built with React and related libraries.",
+  "name": "pp-battleship-game",
+  "description": "Pet-project of game web application based on the battleship game and built with React and related libraries.",
   "private": true,
   "scripts": {
     "dev": "webpack serve --open --config dev.webpack.config.babel.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Max-N89/battleship-game.git"
+    "url": "git+https://github.com/red-01ne/pp-battleship-game.git"
   },
   "author": "Maksym Nikishyn <4work.maxn@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Max-N89/battleship-game/issues"
+    "url": "https://github.com/red-01ne/pp-battleship-game/issues"
   },
-  "homepage": "https://github.com/Max-N89/battleship-game#readme",
+  "homepage": "https://github.com/red-01ne/pp-battleship-game#readme",
   "devDependencies": {
     "@babel/core": "^7.15.8",
     "@babel/preset-env": "^7.15.8",
